@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campus Current Messages</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="app-body">
+  <header class="site-header">
+    <a class="brand-mark" href="index.html">
+      <span>CC</span>
+      <strong>Campus Current</strong>
+    </a>
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a href="dashboard.html">Marketplace</a>
+      <a href="addproduct.html">Sell</a>
+      <a href="campus.html">Campus</a>
+      <a href="admin.html">Admin</a>
+      <a href="messages.html" class="active">Messages</a>
+      <a href="#help">Help</a>
+      <a href="#feedback">Feedback</a>
+    </nav>
+  </header>
+
+  <main class="app-shell">
+    <section class="topbar">
+      <div>
+        <p class="eyebrow">Messages</p>
+        <h1 class="app-title">Connect with other students</h1>
+      </div>
+      <div class="topbar-actions">
+        <button type="button" class="button secondary notification-toggle" id="notificationToggle">Notifications <span id="notificationCount" class="count-badge">0</span></button>
+        <button type="button" class="button ghost" onclick="logout()">Logout</button>
+      </div>
+    </section>
+
+    <section class="messages-layout">
+      <!-- Left side: Conversation list -->
+      <aside class="messages-sidebar">
+        <div class="messages-search">
+          <label class="search-field">
+            <span>Search conversations</span>
+            <input type="search" id="messageSearch" placeholder="Search by name or listing...">
+          </label>
+        </div>
+
+        <div class="messages-list" id="messagesList">
+          <div class="empty-state">
+            <p>No conversations yet. Start a conversation from a marketplace listing or Lost & Found item.</p>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right side: Chat view -->
+      <section class="messages-chat">
+        <div class="chat-header" id="chatHeader">
+          <div>
+            <h2 id="chatTitle">Select a conversation</h2>
+            <p class="chat-subtitle" id="chatSubtitle">Choose a conversation to view messages</p>
+          </div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+          <div class="empty-state">
+            <p>Select a conversation to view messages</p>
+          </div>
+        </div>
+
+        <div class="chat-composer">
+          <textarea id="messageInput" placeholder="Type a message..."></textarea>
+          <button type="button" class="button primary" id="sendButton">Send</button>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>Campus Current</span>
+    <p>Help: <a href="mailto:shewalekeshav985@gmail.com">shewalekeshav985@gmail.com</a></p>
+  </footer>
+
+  <script type="module" src="messages.js"></script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campus Modules</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="app-body">
+  <header class="site-header">
+    <a class="brand-mark" href="index.html"><span>CC</span><strong>Campus Current</strong></a>
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a href="dashboard.html">Marketplace</a>
+      <a href="addproduct.html">Sell</a>
+      <a href="campus.html">Campus</a>
+      <a href="admin.html">Admin</a>
+      <button type="button" class="button ghost" onclick="logout()">Logout</button>
+    </nav>
+  </header>
+
+  <main class="app-shell" id="campusApp">
+    <section class="topbar">
+      <div>
+        <p class="eyebrow">Campus services</p>
+        <h1 class="app-title">Find, share, rent, join, and apply.</h1>
+      </div>
+      <div class="topbar-actions">
+        <a class="button secondary" href="dashboard.html">Marketplace</a>
+      </div>
+    </section>
+
+    <section class="campus-tabs" aria-label="Campus module tabs">
+      <button type="button" class="pill active" data-campus-tab="lostFoundPanel">Lost & Found</button>
+      <button type="button" class="pill" data-campus-tab="studyPanel">Study Material</button>
+      <button type="button" class="pill" data-campus-tab="rentalsPanel">Book Rentals</button>
+      <button type="button" class="pill" data-campus-tab="hostelPanel">Hostel Essentials</button>
+      <button type="button" class="pill" data-campus-tab="ticketsPanel">Tickets</button>
+      <button type="button" class="pill" data-campus-tab="roommatePanel">Roommates</button>
+      <button type="button" class="pill" data-campus-tab="merchPanel">Club Merch</button>
+      <button type="button" class="pill" data-campus-tab="jobsPanel">Jobs</button>
+    </section>
+
+    <section id="lostFoundPanel" class="campus-panel active">
+      <form class="module-form" id="lostFoundForm">
+        <h2>Lost & Found</h2>
+        <select name="itemType"><option value="lost">Lost</option><option value="found">Found</option></select>
+        <input name="title" placeholder="Item title">
+        <input name="category" placeholder="Category">
+        <input name="itemDate" type="date">
+        <input name="location" placeholder="Last seen or found location">
+        <textarea name="description" placeholder="Description"></textarea>
+        <label class="upload-field">
+          <span>Upload image</span>
+          <input name="image" type="file" accept="image/*">
+        </label>
+        <div id="imagePreview" class="image-preview empty-state"><p>No image selected yet.</p></div>
+        <button class="button primary" type="submit">Post Item</button>
+      </form>
+      <div class="module-filters">
+        <select id="lostFoundType"><option value="">All</option><option value="lost">Lost</option><option value="found">Found</option></select>
+        <input id="lostFoundCategory" placeholder="Category filter">
+        <input id="lostFoundDate" type="date">
+        <button type="button" class="button secondary" onclick="loadLostFound()">Filter</button>
+      </div>
+      <div id="lostFoundList" class="module-grid"></div>
+    </section>
+
+    <section id="studyPanel" class="campus-panel">
+      <form class="module-form" id="studyForm">
+        <h2>Notes & Study Materials</h2>
+        <input name="title" placeholder="Material title">
+        <input name="department" placeholder="Department">
+        <input name="yearLabel" placeholder="Year">
+        <input name="semester" placeholder="Semester">
+        <input name="subject" placeholder="Subject">
+        <select name="materialType"><option>Notes</option><option>PDF</option><option>Assignment</option><option>Previous Paper</option></select>
+        <textarea name="description" placeholder="Short description"></textarea>
+        <input name="file" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,image/*">
+        <button class="button primary" type="submit">Upload Material</button>
+      </form>
+      <div class="module-filters">
+        <input id="studySearch" placeholder="Search subject or title">
+        <input id="studyDepartment" placeholder="Department">
+        <input id="studyYear" placeholder="Year">
+        <input id="studySemester" placeholder="Semester">
+        <button type="button" class="button secondary" onclick="loadStudyMaterials()">Filter</button>
+      </div>
+      <div id="studyList" class="module-grid"></div>
+    </section>
+
+    <section id="rentalsPanel" class="campus-panel">
+      <form class="module-form" id="rentalForm">
+        <h2>Book Rental System</h2>
+        <input name="title" placeholder="Book title">
+        <input name="author" placeholder="Author">
+        <input name="rentalPrice" type="number" placeholder="Rental price">
+        <input name="securityDeposit" type="number" placeholder="Security deposit">
+        <input name="rentalDuration" placeholder="Duration, e.g. 14 days">
+        <input name="returnDate" type="date">
+        <input name="image" type="file" accept="image/*">
+        <button class="button primary" type="submit">Post Rental</button>
+      </form>
+      <div id="rentalList" class="module-grid"></div>
+    </section>
+
+    <section id="hostelPanel" class="campus-panel">
+      <form class="module-form" id="hostelForm">
+        <h2>Hostel Essentials</h2>
+        <input name="title" placeholder="Mattress, table, fan...">
+        <input name="hostelName" placeholder="Hostel name">
+        <input name="price" type="number" placeholder="Price">
+        <textarea name="description" placeholder="Condition and pickup details"></textarea>
+        <input name="image" type="file" accept="image/*">
+        <button class="button primary" type="submit">Post Hostel Item</button>
+      </form>
+      <div class="module-filters">
+        <input id="hostelFilter" placeholder="Filter by hostel">
+        <button type="button" class="button secondary" onclick="loadHostelEssentials()">Filter</button>
+      </div>
+      <div id="hostelList" class="module-grid"></div>
+    </section>
+
+    <section id="ticketsPanel" class="campus-panel">
+      <form class="module-form" id="ticketForm">
+        <h2>Event Ticket Exchange</h2>
+        <input name="eventName" placeholder="Event name">
+        <input name="eventDate" type="date">
+        <input name="venue" placeholder="Venue">
+        <input name="quantity" type="number" placeholder="Quantity">
+        <input name="price" type="number" placeholder="Price per ticket">
+        <input name="validUntil" type="date">
+        <input name="image" type="file" accept="image/*">
+        <button class="button primary" type="submit">Post Ticket</button>
+      </form>
+      <div id="ticketList" class="module-grid"></div>
+    </section>
+
+    <section id="roommatePanel" class="campus-panel">
+      <form class="module-form" id="roommateForm">
+        <h2>Roommate Finder</h2>
+        <input name="hostel" placeholder="Hostel">
+        <input name="roomType" placeholder="Room type">
+        <input name="budget" type="number" placeholder="Budget">
+        <input name="genderPreference" placeholder="Gender preference">
+        <input name="contactDetails" placeholder="Contact details">
+        <textarea name="description" placeholder="Preferences and schedule"></textarea>
+        <button class="button primary" type="submit">Post Requirement</button>
+      </form>
+      <div class="module-filters">
+        <input id="roommateHostel" placeholder="Hostel">
+        <input id="roommateGender" placeholder="Gender preference">
+        <button type="button" class="button secondary" onclick="loadRoommates()">Filter</button>
+      </div>
+      <div id="roommateList" class="module-grid"></div>
+    </section>
+
+    <section id="merchPanel" class="campus-panel">
+      <form class="module-form" id="merchForm">
+        <h2>Campus Club Merchandise</h2>
+        <input name="clubName" placeholder="Club name">
+        <input name="itemName" placeholder="Item name">
+        <select name="itemType"><option>T-shirt</option><option>Hoodie</option><option>Badge</option><option>Sticker</option><option>Accessory</option></select>
+        <input name="price" type="number" placeholder="Price">
+        <input name="quantity" type="number" placeholder="Quantity">
+        <textarea name="description" placeholder="Sizes, colors, pickup"></textarea>
+        <input name="image" type="file" accept="image/*">
+        <button class="button primary" type="submit">Post Merchandise</button>
+      </form>
+      <div id="merchList" class="module-grid"></div>
+    </section>
+
+    <section id="jobsPanel" class="campus-panel">
+      <form class="module-form" id="jobForm">
+        <h2>Internship & Part-Time Opportunities</h2>
+        <input name="companyName" placeholder="Company, club, or admin">
+        <input name="role" placeholder="Role">
+        <input name="location" placeholder="Location">
+        <input name="stipend" placeholder="Stipend">
+        <select name="opportunityType"><option>Internship</option><option>Part-time</option><option>Campus role</option></select>
+        <input name="deadline" type="date">
+        <input name="applyLink" placeholder="Apply link">
+        <textarea name="eligibility" placeholder="Eligibility"></textarea>
+        <button class="button primary" type="submit">Post Opportunity</button>
+      </form>
+      <div class="module-filters">
+        <input id="jobSearch" placeholder="Search role, company, location">
+        <input id="jobType" placeholder="Type">
+        <button type="button" class="button secondary" onclick="loadOpportunities()">Filter</button>
+      </div>
+      <div id="jobList" class="module-grid"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer"><span>Campus Current</span><p>Help: <a href="mailto:campuscurrent10@gmail.com">campuscurrent10@gmail.com</a></p></footer>
+  <script type="module" src="campus.js"></script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Analytics</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="app-body">
+  <header class="site-header">
+    <a class="brand-mark" href="index.html"><span>CC</span><strong>Campus Current</strong></a>
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a href="dashboard.html">Marketplace</a>
+      <a href="addproduct.html">Sell</a>
+      <a href="admin.html">Admin</a>
+    </nav>
+  </header>
+
+  <main class="app-shell">
+    <section class="topbar">
+      <div>
+        <p class="eyebrow">Admin analytics</p>
+        <h1 class="app-title">Marketplace pulse.</h1>
+      </div>
+      <div class="topbar-actions">
+        <button type="button" class="button ghost" onclick="logout()">Logout</button>
+      </div>
+    </section>
+
+    <section id="adminDashboard" class="admin-dashboard">
+      <div class="empty-state product-card"><p>Loading analytics...</p></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>Campus Current</span>
+    <p>Help: <a href="mailto:shewalekeshav985@gmail.com">shewalekeshav985@gmail.com</a></p>
+  </footer>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>

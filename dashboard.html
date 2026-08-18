@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campus Current Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="app-body">
+  <header class="site-header">
+    <a class="brand-mark" href="index.html">
+      <span>CC</span>
+      <strong>Campus Current</strong>
+    </a>
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a href="dashboard.html">Marketplace</a>
+      <a href="addproduct.html">Sell</a>
+      <a href="campus.html">Campus</a>
+      <a href="admin.html">Admin</a>
+      <a href="messages.html">Messages</a>
+      <a href="#help">Help</a>
+      <a href="#feedback">Feedback</a>
+    </nav>
+  </header>
+
+  <main class="app-shell">
+    <section class="topbar">
+      <div>
+        <p class="eyebrow">Campus Current</p>
+        <h1 class="app-title">Browse buy and sell drops around your college.</h1>
+      </div>
+      <div class="topbar-actions">
+        <button type="button" class="button secondary notification-toggle" id="notificationToggle">Notifications <span id="notificationCount" class="count-badge">0</span></button>
+        <a class="button secondary" href="addproduct.html">Create Listing</a>
+        <button type="button" class="button ghost" onclick="logout()">Logout</button>
+      </div>
+    </section>
+
+    <section id="notificationTray" class="notification-tray empty-state">
+      <p>No notifications yet.</p>
+    </section>
+
+    <section class="dashboard-layout">
+      <div class="market-column">
+        <section class="market-hero">
+          <div>
+            <p class="eyebrow">Smart browsing</p>
+            <h2>Switch between what students want to buy, sell, and lost & found items.</h2>
+          </div>
+          <div class="pill-group" id="listingFilters">
+            <button type="button" class="pill active" data-filter="all">All</button>
+            <button type="button" class="pill" data-filter="sell">Sell</button>
+            <button type="button" class="pill" data-filter="buy">Buy</button>
+            <button type="button" class="pill" data-filter="lostFound">Lost & Found</button>
+          </div>
+        </section>
+
+        <section class="browse-toolbar">
+          <label class="search-field">
+            <span>Browse campus finds</span>
+            <input type="search" id="searchInput" placeholder="Search headphones, books, room lights...">
+          </label>
+          <div class="market-stats">
+            <article>
+              <strong id="listingCount">0</strong>
+              <span>Visible listings</span>
+            </article>
+            <article>
+              <strong id="sellCount">0</strong>
+              <span>Sell posts</span>
+            </article>
+            <article>
+              <strong id="buyCount">0</strong>
+              <span>Buy requests</span>
+            </article>
+          </div>
+        </section>
+
+        <section id="products" class="products-grid"></section>
+      </div>
+
+      <aside class="chat-column">
+        <section class="chat-panel">
+          <div class="chat-panel-header">
+            <div>
+              <p class="eyebrow">Messaging chatbox</p>
+              <h2 id="chatTitle">Open a listing chat</h2>
+            </div>
+            <div class="chat-header-actions">
+              <a class="button secondary inbox-link" href="messages.html">Inbox</a>
+              <button type="button" class="button ghost chat-close-button" onclick="closeDashboardChat()">Close</button>
+            </div>
+          </div>
+          <span class="chat-status" id="chatStatus">Choose a product card</span>
+
+          <div id="conversationList" class="conversation-list empty-state"><p>No conversations yet.</p></div>
+
+          <div id="chatMessages" class="chat-messages empty-state">
+            <p>Select a listing and start a conversation with the buyer or seller.</p>
+          </div>
+
+          <div class="chat-composer">
+            <textarea id="chatInput" placeholder="Type a message about pickup, price, or condition..."></textarea>
+            <label class="chat-upload-field">
+              <span>Add buyer image</span>
+              <input type="file" id="chatImageUpload" accept="image/*">
+            </label>
+            <div id="chatImagePreview" class="chat-image-preview empty-state">
+              <p>No chat image selected.</p>
+            </div>
+            <button type="button" class="button primary" onclick="sendMessage()">Send Message</button>
+          </div>
+        </section>
+      </aside>
+    </section>
+
+    <section class="help-band" id="help">
+      <div>
+        <p class="eyebrow">Help option</p>
+        <h2>Use the marketplace with more confidence.</h2>
+      </div>
+      <div class="help-grid">
+        <article>
+          <strong>Buying</strong>
+          <span>Ask for more photos, confirm pickup time, and use the chat before you commit.</span>
+        </article>
+        <article>
+          <strong>Selling</strong>
+          <span>Use honest descriptions and remove your listing once the item is sold.</span>
+        </article>
+        <article>
+          <strong>Support</strong>
+          <span>If something looks wrong, logout and login again, then contact the listing owner from chat.</span>
+        </article>
+        <article id="feedback">
+          <strong>Feedback & queries</strong>
+          <span>Email <a href="mailto:campuscurrect10@gmail.com">campuscurrect10@gmail.com</a> for help.</span>
+        </article>
+      </div>
+    </section>
+      <section id="productDetailModal" class="modal-shell" aria-hidden="true"></section>
+  </main>
+
+  <footer class="site-footer">
+    <span>Campus Current</span>
+    <p>Help: <a href="mailto:campuscurrect10@gmail.com">campuscurrect10@gmail.com</a></p>
+  </footer>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>

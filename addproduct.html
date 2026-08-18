@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Listing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="form-body">
+  <header class="site-header">
+    <a class="brand-mark" href="index.html">
+      <span>CC</span>
+      <strong>Campus Current</strong>
+    </a>
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a href="dashboard.html">Marketplace</a>
+      <a href="addproduct.html">Sell</a>
+      <a href="admin.html">Admin</a>
+      <a href="#help">Help</a>
+      <a href="#feedback">Feedback</a>
+    </nav>
+  </header>
+
+  <main class="form-shell">
+    <section class="form-panel">
+      <div class="form-header">
+        <p class="eyebrow">Create a listing</p>
+        <h1>Post a campus find with image, price, and purpose.</h1>
+        <p>Choose whether you want to sell something or post a buy request for something you need.</p>
+      </div>
+
+      <div class="listing-type-grid">
+        <label class="type-card">
+          <input type="radio" name="listingType" value="sell" checked>
+          <span>Sell</span>
+          <small>I have something to offer.</small>
+        </label>
+        <label class="type-card">
+          <input type="radio" name="listingType" value="buy">
+          <span>Buy</span>
+          <small>I am looking for something.</small>
+        </label>
+      </div>
+
+      <div class="form-grid">
+        <label>
+          <span>Title</span>
+          <input type="text" id="title" placeholder="Noise-cancelling headphones">
+        </label>
+        <label>
+          <span>Price</span>
+          <input type="number" id="price" placeholder="2500">
+        </label>
+        <label>
+          <span>Condition</span>
+          <select id="conditionLabel">
+            <option>Like New</option>
+            <option selected>Good</option>
+            <option>Fair</option>
+            <option>Poor</option>
+          </select>
+        </label>
+        <label>
+          <span>Category</span>
+          <input type="text" id="category" placeholder="Electronics">
+        </label>
+        <div id="priceSuggestion" class="price-suggestion full-width empty-state">
+          <p>Add a category and condition to see an AI price suggestion.</p>
+        </div>
+        <label class="full-width">
+          <span>Description</span>
+          <textarea id="desc" placeholder="Add condition, pickup spot, delivery details, or what exactly you want to buy."></textarea>
+        </label>
+        <label class="full-width upload-field">
+          <span>Add image</span>
+          <input type="file" id="imageUpload" accept="image/*">
+          <small>Browse and upload a product image. It will appear in the listing cards.</small>
+        </label>
+      </div>
+
+      <div id="imagePreview" class="image-preview empty-state">
+        <p>No image selected yet.</p>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="button primary" onclick="addProduct()">Publish Listing</button>
+        <a class="button secondary" href="dashboard.html">Back to dashboard</a>
+      </div>
+    </section>
+
+    <section class="help-band compact-help" id="help">
+      <div>
+        <p class="eyebrow">Listing help</p>
+        <h2>Better posts sell faster.</h2>
+      </div>
+      <div class="help-grid">
+        <article>
+          <strong>Photo</strong>
+          <span>Use a clear image in good light.</span>
+        </article>
+        <article>
+          <strong>Price</strong>
+          <span>Set a realistic amount students can compare quickly.</span>
+        </article>
+        <article>
+          <strong>Details</strong>
+          <span>Mention condition, pickup spot, and what is included.</span>
+        </article>
+        <article id="feedback">
+          <strong>Feedback & queries</strong>
+          <span>Email <a href="mailto:campuscurrent10@gmail.com">campuscurrent10@gmail.com</a> for help.</span>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>Campus Current</span>
+    <p>Help: <a href="mailto:campuscurrent10@gmail.com">campuscurrent10@gmail.com</a></p>
+  </footer>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>
+
+
+

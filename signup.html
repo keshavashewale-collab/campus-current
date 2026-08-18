@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Signup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="form-body">
+  <header class="site-header">
+    <a class="brand-mark" href="index.html">
+      <span>CC</span>
+      <strong>Campus Current</strong>
+    </a>
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a href="login.html">Login</a>
+      <a href="dashboard.html">Marketplace</a>
+      <a href="#help">Help</a>
+      <a href="#feedback">Feedback</a>
+    </nav>
+  </header>
+
+  <main class="auth-shell">
+    <section class="auth-panel">
+      <p class="eyebrow">Join Campus Current</p>
+      <h1>Create your student marketplace account.</h1>
+      <p>Start posting listings, upload product images, and connect with buyers or sellers in one place.</p>
+
+      <input type="email" id="email" placeholder="College Email">
+      <input type="password" id="password" placeholder="Password">
+      <button type="button" class="button primary auth-button" onclick="signup()">Signup</button>
+      <p>Already have an account? <a href="login.html">Login</a></p>
+    </section>
+
+    <section class="help-band compact-help" id="help">
+      <div>
+        <p class="eyebrow">Signup help</p>
+        <h2>Create an account, then post listings or message sellers from the dashboard.</h2>
+      </div>
+      <div class="help-grid">
+        <article id="feedback">
+          <strong>Feedback & queries</strong>
+          <span>Email <a href="mailto:campuscurrent10@gmail.com">campuscurrent10@gmail.com</a> for help.</span>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>Campus Current</span>
+    <p>Help: <a href="mailto:campuscurrent10@gmail.com">campuscurrent10@gmail.com</a></p>
+  </footer>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>

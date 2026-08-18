@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campus Current</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="landing-body">
+  <header class="site-header homepage-header">
+    <a class="brand-mark" href="index.html">
+      <span>CC</span>
+      <strong>Campus Current</strong>
+    </a>
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a href="dashboard.html">Marketplace</a>
+      <a href="addproduct.html">Sell</a>
+      <a href="campus.html">Campus</a>
+      <a href="admin.html">Admin</a>
+      <a href="login.html">Login</a>
+    </nav>
+  </header>
+
+  <main class="landing-shell homepage-shell">
+    <section class="startup-hero">
+      <div class="startup-hero-copy">
+        <p class="eyebrow">Student commerce, organized</p>
+        <h1>Everything You Need, Right On Campus</h1>
+        <p class="hero-text">
+          Buy, sell, recover lost items, and share study resources through one polished campus-first marketplace.
+        </p>
+
+        <form class="homepage-search" id="homepageSearchForm" role="search">
+          <label for="homepageSearch">Search campus listings</label>
+          <div>
+            <input type="search" id="homepageSearch" placeholder="Search books, laptops, calculators, lost IDs...">
+            <button type="submit">Search</button>
+          </div>
+        </form>
+
+        <div class="hero-actions">
+          <a class="button primary" href="dashboard.html">Browse Marketplace</a>
+          <a class="button secondary" href="addproduct.html">Sell an Item</a>
+        </div>
+
+        <div class="campus-proof">
+          <article>
+            <strong id="homeListingTotal">0</strong>
+            <span>marketplace posts</span>
+          </article>
+          <article>
+            <strong id="homeLostFoundTotal">0</strong>
+            <span>lost & found items</span>
+          </article>
+          <article>
+            <strong id="homeStudyTotal">0</strong>
+            <span>study resources</span>
+          </article>
+        </div>
+      </div>
+
+      <div class="startup-hero-media" aria-label="Campus marketplace preview">
+        <div class="hero-image-panel">
+          <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80" alt="Students using laptops together on campus">
+        </div>
+        <article class="live-preview-card" id="homeHeroListing">
+          <p class="card-label">Live marketplace</p>
+          <strong>Loading latest listing...</strong>
+          <span>Pulling from your campus feed</span>
+        </article>
+      </div>
+    </section>
+
+    <section class="home-section">
+      <div class="section-heading">
+        <p class="eyebrow">Popular now</p>
+        <h2>Trending Listings</h2>
+        <a href="dashboard.html">View all</a>
+      </div>
+      <div class="home-card-grid" id="trendingListings" aria-live="polite"></div>
+    </section>
+
+    <section class="home-section split-section">
+      <div>
+        <div class="section-heading">
+          <p class="eyebrow">Fresh drops</p>
+          <h2>Recently Added</h2>
+        </div>
+        <div class="home-card-grid compact" id="recentListings" aria-live="polite"></div>
+      </div>
+      <div>
+        <div class="section-heading">
+          <p class="eyebrow">Campus-wide</p>
+          <h2>Nearby Listings</h2>
+        </div>
+        <div class="home-card-grid compact" id="nearbyListings" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="home-section campus-resource-band">
+      <div class="section-heading">
+        <p class="eyebrow">Recover faster</p>
+        <h2>Lost & Found</h2>
+        <a href="campus.html">Open campus hub</a>
+      </div>
+      <div class="home-card-grid" id="homeLostFound" aria-live="polite"></div>
+    </section>
+
+    <section class="home-section campus-resource-band study-band">
+      <div class="section-heading">
+        <p class="eyebrow">Shared knowledge</p>
+        <h2>Study Materials</h2>
+        <a href="campus.html">Browse resources</a>
+      </div>
+      <div class="home-card-grid" id="homeStudyMaterials" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>Campus Current</span>
+    <p>Help: <a href="mailto:campuscurrent10@gmail.com">campuscurrect10@gmail.com</a></p>
+    <p>help: <a href="instagram:https://www.instagram.com/campuscurrent10?igsh=cXpjajB6amZua3Zn">@campuscurrect10</a></p>
+  </footer>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>
+
