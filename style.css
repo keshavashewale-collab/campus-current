@@ -2191,3 +2191,75 @@ h2,
     border-radius: 22px;
   }
 }
+/* ===== Messages page scrolling fix ===== */
+
+.messages-layout {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 24px;
+  height: calc(100vh - 230px);
+  min-height: 500px;
+}
+
+.messages-sidebar {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.messages-chat {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.messages-chat .chat-messages {
+  min-height: 0;
+  max-height: none;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.messages-chat .chat-composer {
+  flex-shrink: 0;
+  padding-top: 14px;
+  background: var(--surface);
+}
+
+.messages-chat .chat-composer textarea {
+  min-height: 70px;
+  max-height: 120px;
+  resize: vertical;
+}
+
+/* Tablet / Mobile */
+@media (max-width: 800px) {
+  .messages-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+    min-height: 0;
+  }
+
+  .messages-sidebar {
+    max-height: 300px;
+  }
+
+  .messages-chat {
+    height: 70vh;
+    min-height: 500px;
+  }
+}
+
+/* Small phones */
+@media (max-width: 520px) {
+  .messages-chat {
+    height: 75vh;
+    min-height: 450px;
+  }
+
+  .messages-chat .chat-composer textarea {
+    min-height: 60px;
+  }
+}
