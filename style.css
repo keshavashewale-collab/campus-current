@@ -2191,75 +2191,110 @@ h2,
     border-radius: 22px;
   }
 }
-/* ===== Messages page scrolling fix ===== */
+/* ===== FINAL MESSAGES PAGE FIX ===== */
 
-.messages-layout {
-  display: grid;
-  grid-template-columns: 320px minmax(0, 1fr);
-  gap: 24px;
-  height: calc(100vh - 230px);
-  min-height: 500px;
-}
-
-.messages-sidebar {
-  min-height: 0;
-  overflow-y: auto;
-}
-
-.messages-chat {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  min-height: 0;
-  height: 100%;
+/* Prevent the whole page from scrolling while using chat */
+.messages-page {
+  height: 100dvh;
   overflow: hidden;
 }
 
-.messages-chat .chat-messages {
+.messages-page .app-shell {
+  height: calc(100dvh - 145px);
+  display: flex;
+  flex-direction: column;
   min-height: 0;
-  max-height: none;
-  height: 100%;
+}
+
+.messages-page .topbar {
+  flex: 0 0 auto;
+}
+
+/* Main messaging window */
+.messages-page .messages-layout {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  overflow: hidden;
+}
+
+/* Left conversation area */
+.messages-page .messages-sidebar {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.messages-page .messages-list {
+  min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 
-.messages-chat .chat-composer {
+/* Right chat area */
+.messages-page .messages-chat {
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+/* ONLY this area scrolls */
+.messages-page .chat-messages {
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+}
+
+/* Send box always stays visible */
+.messages-page .chat-composer {
+  position: relative;
   flex-shrink: 0;
-  padding-top: 14px;
-  background: var(--surface);
+  z-index: 5;
 }
 
-.messages-chat .chat-composer textarea {
-  min-height: 70px;
-  max-height: 120px;
-  resize: vertical;
+/* Do NOT stack chat vertically on laptop/tablet */
+@media (min-width: 721px) {
+  .messages-page .messages-layout {
+    grid-template-columns: minmax(260px, 320px) minmax(0, 1fr) !important;
+  }
+
+  .messages-page .messages-sidebar {
+    max-height: none !important;
+    border-inline-end: 1px solid var(--border);
+    border-block-end: 0;
+  }
 }
 
-/* Tablet / Mobile */
-@media (max-width: 800px) {
-  .messages-layout {
-    grid-template-columns: 1fr;
+/* Mobile */
+@media (max-width: 720px) {
+  .messages-page {
     height: auto;
+    min-height: 100dvh;
+    overflow-y: auto;
+  }
+
+  .messages-page .app-shell {
+    height: auto;
+  }
+
+  .messages-page .messages-layout {
+    height: 75dvh;
+    min-height: 520px;
+    grid-template-columns: 1fr;
+    grid-template-rows: 180px minmax(0, 1fr);
+  }
+
+  .messages-page .messages-sidebar {
+    max-height: 180px;
+    overflow: hidden;
+  }
+
+  .messages-page .messages-chat {
     min-height: 0;
-  }
-
-  .messages-sidebar {
-    max-height: 300px;
-  }
-
-  .messages-chat {
-    height: 70vh;
-    min-height: 500px;
-  }
-}
-
-/* Small phones */
-@media (max-width: 520px) {
-  .messages-chat {
-    height: 75vh;
-    min-height: 450px;
-  }
-
-  .messages-chat .chat-composer textarea {
-    min-height: 60px;
   }
 }
