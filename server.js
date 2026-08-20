@@ -2,7 +2,7 @@ const path = require("path");
 const crypto = require("crypto");
 const express = require("express");
 const cors = require("cors");
-const mysql = require("mysql2/promise");
+const { Pool } = require("pg");
 require("dotenv").config();
 
 const app = express();
@@ -12,15 +12,134 @@ app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.static(__dirname));
 
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || "localhost",
-  port: Number(process.env.DB_PORT || 3306),
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "",
-  database: process.env.DB_NAME || "college_marketplace",
-  waitForConnections: true,
-  connectionLimit: 10
+// ========================================
+// SUPABASE POSTGRESQL DATABASE CONNECTION
+// ========================================
+
+const pgPool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
+
+// Convert MySQL ? placeholders to PostgreSQL $1, $2, $3...
+function convertPlaceholders(sql) {
+  let index = 0;
+
+  return sql.replace(/\?/g, () => {
+    index++;
+    return `$${index}`;
+  });
+}
+
+// Preserve aliases such as productName, sellerName, buyerName, etc.
+function restoreAliasCase(sql, rows) {
+  const aliases = [
+    ...sql.matchAll(/\bAS\s+([A-Za-z_][A-Za-z0-9_]*)/gi)
+  ].map((match) => match[1]);
+
+  if (!aliases.length) {
+    return rows;
+  }
+
+  return rows.map((row) => {
+    const copy = { ...row };
+
+    for (const alias of aliases) {
+      const postgresAlias = alias.toLowerCase();
+
+      if (
+        postgresAlias !== alias &&
+        Object.prototype.hasOwnProperty.call(copy, postgresAlias)
+      ) {
+        copy[alias] = copy[postgresAlias];
+        delete copy[postgresAlias];
+      }
+    }
+
+    return copy;
+  });
+}
+
+// Convert special MySQL queries used by the existing project
+function convertMysqlSql(sql) {
+  let converted = sql;
+
+  // MySQL INSERT IGNORE -> PostgreSQL ON CONFLICT
+  converted = converted.replace(
+    /INSERT\s+IGNORE\s+INTO\s+wishlist\s*\(user_id,\s*product_id\)\s*VALUES\s*\(\?,\s*\?\)/i,
+    "INSERT INTO wishlist (user_id, product_id) VALUES (?, ?) ON CONFLICT (user_id, product_id) DO NOTHING"
+  );
+
+  // Product review upsert
+  converted = converted.replace(
+    /ON\s+DUPLICATE\s+KEY\s+UPDATE\s+rating\s*=\s*VALUES\(rating\),\s*review\s*=\s*VALUES\(review\),\s*created_at\s*=\s*CURRENT_TIMESTAMP/i,
+    "ON CONFLICT (product_id, buyer_id) DO UPDATE SET rating = EXCLUDED.rating, review = EXCLUDED.review, created_at = CURRENT_TIMESTAMP"
+  );
+
+  // Book rental request upsert
+  converted = converted.replace(
+    /ON\s+DUPLICATE\s+KEY\s+UPDATE\s+status\s*=\s*'pending'/i,
+    "ON CONFLICT (book_id, requester_id) DO UPDATE SET status = 'pending'"
+  );
+
+  // MySQL DATE_FORMAT -> PostgreSQL TO_CHAR
+  converted = converted.replace(
+    /DATE_FORMAT\(created_at,\s*'%Y-%m'\)/gi,
+    "TO_CHAR(created_at, 'YYYY-MM')"
+  );
+
+  return convertPlaceholders(converted);
+}
+
+// Compatibility layer so existing pool.query() code can continue working
+const pool = {
+  async query(sql, params = []) {
+    let convertedSql = convertMysqlSql(sql);
+
+    const trimmed = convertedSql.trim();
+
+    const isInsert = /^INSERT\b/i.test(trimmed);
+    const isSelect = /^(SELECT|WITH)\b/i.test(trimmed);
+    const isUpdate = /^UPDATE\b/i.test(trimmed);
+    const isDelete = /^DELETE\b/i.test(trimmed);
+
+    // Existing code expects result.insertId
+    if (isInsert && !/\bRETURNING\b/i.test(convertedSql)) {
+      convertedSql += " RETURNING id";
+    }
+
+    const result = await pgPool.query(convertedSql, params);
+
+    if (isSelect) {
+      return [restoreAliasCase(sql, result.rows), []];
+    }
+
+    if (isInsert) {
+      return [
+        {
+          insertId: result.rows?.[0]?.id ?? null,
+          affectedRows: result.rowCount
+        },
+        []
+      ];
+    }
+
+    if (isUpdate || isDelete) {
+      return [
+        {
+          affectedRows: result.rowCount
+        },
+        []
+      ];
+    }
+
+    return [restoreAliasCase(sql, result.rows || []), []];
+  }
+};
+
+
 
 const notificationClients = new Map();
 
@@ -78,298 +197,10 @@ async function createNotification(userId, type, title, body, link = "") {
   return notification;
 }
 
-async function ensureColumn(tableName, columnName, definition) {
-  const [rows] = await pool.query(`SHOW COLUMNS FROM \`${tableName}\` LIKE ?`, [columnName]);
-
-  if (!rows.length) {
-    await pool.query(`ALTER TABLE \`${tableName}\` ADD COLUMN ${definition}`);
-  }
-}
-
 async function initializeDatabase() {
-  const connection = await mysql.createConnection({
-    host: process.env.DB_HOST || "localhost",
-    port: Number(process.env.DB_PORT || 3306),
-    user: process.env.DB_USER || "root",
-    password: process.env.DB_PASSWORD || ""
-  });
-
-  await connection.query(
-    `CREATE DATABASE IF NOT EXISTS \`${process.env.DB_NAME || "college_marketplace"}\``
-  );
-
-  await connection.end();
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      email VARCHAR(255) NOT NULL UNIQUE,
-      password_hash VARCHAR(255) NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS products (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      title VARCHAR(255) NOT NULL,
-      price DECIMAL(10, 2) NOT NULL,
-      category VARCHAR(100) NOT NULL,
-      description TEXT NOT NULL,
-      listing_type VARCHAR(20) NOT NULL DEFAULT 'sell',
-      image_url LONGTEXT NULL,
-      user_id INT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      CONSTRAINT fk_products_user
-        FOREIGN KEY (user_id) REFERENCES users(id)
-        ON DELETE CASCADE
-    )
-  `);
-
-  await ensureColumn("products", "listing_type", "`listing_type` VARCHAR(20) NOT NULL DEFAULT 'sell'");
-  await ensureColumn("products", "image_url", "`image_url` LONGTEXT NULL");
-  await ensureColumn("products", "condition_label", "`condition_label` VARCHAR(60) NOT NULL DEFAULT 'Good'");
-  await ensureColumn("products", "status", "`status` VARCHAR(20) NOT NULL DEFAULT 'active'");
-  await ensureColumn("products", "sold_to_id", "`sold_to_id` INT NULL");
-  await ensureColumn("products", "sold_at", "`sold_at` TIMESTAMP NULL");
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS messages (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      product_id INT NOT NULL,
-      sender_id INT NOT NULL,
-      receiver_id INT NOT NULL,
-      message TEXT NOT NULL,
-      image_url LONGTEXT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      CONSTRAINT fk_messages_product
-        FOREIGN KEY (product_id) REFERENCES products(id)
-        ON DELETE CASCADE,
-      CONSTRAINT fk_messages_sender
-        FOREIGN KEY (sender_id) REFERENCES users(id)
-        ON DELETE CASCADE,
-      CONSTRAINT fk_messages_receiver
-        FOREIGN KEY (receiver_id) REFERENCES users(id)
-        ON DELETE CASCADE
-    )
-  `);
-
-  await ensureColumn("messages", "image_url", "`image_url` LONGTEXT NULL");
-  await ensureColumn("messages", "read_at", "`read_at` TIMESTAMP NULL");
-  
-  // Add buyer_id to messages table for direct messaging
-  await ensureColumn("messages", "buyer_id", "`buyer_id` INT NULL");
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS orders (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      product_id INT NOT NULL,
-      buyer_id INT NOT NULL,
-      seller_id INT NOT NULL,
-      status VARCHAR(20) NOT NULL DEFAULT 'completed',
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      CONSTRAINT fk_orders_product
-        FOREIGN KEY (product_id) REFERENCES products(id)
-        ON DELETE CASCADE,
-      CONSTRAINT fk_orders_buyer
-        FOREIGN KEY (buyer_id) REFERENCES users(id)
-        ON DELETE CASCADE,
-      CONSTRAINT fk_orders_seller
-        FOREIGN KEY (seller_id) REFERENCES users(id)
-        ON DELETE CASCADE
-    )
-  `);
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS reviews (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      seller_id INT NOT NULL,
-      buyer_id INT NOT NULL,
-      product_id INT NOT NULL,
-      rating INT NOT NULL,
-      review TEXT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE KEY uniq_review_product_buyer (product_id, buyer_id),
-      CONSTRAINT fk_reviews_seller
-        FOREIGN KEY (seller_id) REFERENCES users(id)
-        ON DELETE CASCADE,
-      CONSTRAINT fk_reviews_buyer
-        FOREIGN KEY (buyer_id) REFERENCES users(id)
-        ON DELETE CASCADE,
-      CONSTRAINT fk_reviews_product
-        FOREIGN KEY (product_id) REFERENCES products(id)
-        ON DELETE CASCADE
-    )
-  `);
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS wishlist (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      user_id INT NOT NULL,
-      product_id INT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE KEY uniq_wishlist_user_product (user_id, product_id),
-      CONSTRAINT fk_wishlist_user
-        FOREIGN KEY (user_id) REFERENCES users(id)
-        ON DELETE CASCADE,
-      CONSTRAINT fk_wishlist_product
-        FOREIGN KEY (product_id) REFERENCES products(id)
-        ON DELETE CASCADE
-    )
-  `);
-
-  await ensureColumn("products", "hostel_name", "`hostel_name` VARCHAR(120) NULL");
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS lost_found_items (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      item_type VARCHAR(10) NOT NULL,
-      title VARCHAR(255) NOT NULL,
-      category VARCHAR(100) NOT NULL,
-      description TEXT NOT NULL,
-      item_date DATE NOT NULL,
-      location VARCHAR(255) NOT NULL,
-      image_url LONGTEXT NULL,
-      status VARCHAR(20) NOT NULL DEFAULT 'open',
-      user_id INT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      CONSTRAINT fk_lost_found_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    )
-  `);
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS study_materials (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      title VARCHAR(255) NOT NULL,
-      department VARCHAR(120) NOT NULL,
-      year_label VARCHAR(40) NOT NULL,
-      semester VARCHAR(40) NOT NULL,
-      subject VARCHAR(160) NOT NULL,
-      material_type VARCHAR(60) NOT NULL,
-      description TEXT NULL,
-      file_name VARCHAR(255) NOT NULL,
-      file_data LONGTEXT NOT NULL,
-      user_id INT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      CONSTRAINT fk_study_materials_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    )
-  `);
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS book_rentals (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      title VARCHAR(255) NOT NULL,
-      author VARCHAR(160) NOT NULL,
-      rental_price DECIMAL(10, 2) NOT NULL,
-      security_deposit DECIMAL(10, 2) NOT NULL,
-      rental_duration VARCHAR(80) NOT NULL,
-      availability VARCHAR(20) NOT NULL DEFAULT 'available',
-      return_date DATE NULL,
-      image_url LONGTEXT NULL,
-      user_id INT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      CONSTRAINT fk_book_rentals_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    )
-  `);
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS rental_requests (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      book_id INT NOT NULL,
-      requester_id INT NOT NULL,
-      owner_id INT NOT NULL,
-      status VARCHAR(20) NOT NULL DEFAULT 'pending',
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE KEY uniq_book_requester (book_id, requester_id),
-      CONSTRAINT fk_rental_requests_book FOREIGN KEY (book_id) REFERENCES book_rentals(id) ON DELETE CASCADE,
-      CONSTRAINT fk_rental_requests_requester FOREIGN KEY (requester_id) REFERENCES users(id) ON DELETE CASCADE,
-      CONSTRAINT fk_rental_requests_owner FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
-    )
-  `);
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS event_tickets (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      event_name VARCHAR(255) NOT NULL,
-      event_date DATE NOT NULL,
-      venue VARCHAR(255) NOT NULL,
-      quantity INT NOT NULL,
-      price DECIMAL(10, 2) NOT NULL,
-      valid_until DATE NOT NULL,
-      image_url LONGTEXT NULL,
-      status VARCHAR(20) NOT NULL DEFAULT 'available',
-      user_id INT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      CONSTRAINT fk_event_tickets_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    )
-  `);
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS roommate_posts (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      hostel VARCHAR(120) NOT NULL,
-      room_type VARCHAR(80) NOT NULL,
-      budget DECIMAL(10, 2) NOT NULL,
-      gender_preference VARCHAR(80) NOT NULL,
-      contact_details VARCHAR(255) NOT NULL,
-      description TEXT NOT NULL,
-      status VARCHAR(20) NOT NULL DEFAULT 'open',
-      user_id INT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      CONSTRAINT fk_roommate_posts_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    )
-  `);
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS club_merchandise (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      club_name VARCHAR(160) NOT NULL,
-      item_name VARCHAR(255) NOT NULL,
-      item_type VARCHAR(80) NOT NULL,
-      price DECIMAL(10, 2) NOT NULL,
-      quantity INT NOT NULL,
-      image_url LONGTEXT NULL,
-      description TEXT NOT NULL,
-      status VARCHAR(20) NOT NULL DEFAULT 'available',
-      user_id INT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      CONSTRAINT fk_club_merchandise_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    )
-  `);
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS opportunities (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      company_name VARCHAR(180) NOT NULL,
-      role VARCHAR(180) NOT NULL,
-      location VARCHAR(180) NOT NULL,
-      stipend VARCHAR(120) NOT NULL,
-      eligibility TEXT NOT NULL,
-      deadline DATE NOT NULL,
-      apply_link VARCHAR(500) NOT NULL,
-      opportunity_type VARCHAR(80) NOT NULL,
-      user_id INT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      CONSTRAINT fk_opportunities_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    )
-  `);
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS notifications (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      user_id INT NOT NULL,
-      type VARCHAR(40) NOT NULL,
-      title VARCHAR(255) NOT NULL,
-      body TEXT NOT NULL,
-      link VARCHAR(255) NULL,
-      read_at TIMESTAMP NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      CONSTRAINT fk_notifications_user
-        FOREIGN KEY (user_id) REFERENCES users(id)
-        ON DELETE CASCADE
-    )
-  `);
+  await pgPool.query("SELECT 1");
+  console.log("Connected to Supabase PostgreSQL.");
 }
-
 app.post("/api/signup", async (req, res) => {
   const { email, password } = req.body;
 
@@ -387,7 +218,7 @@ app.post("/api/signup", async (req, res) => {
 
     return res.json({ message: "Signup successful." });
   } catch (error) {
-    if (error.code === "ER_DUP_ENTRY") {
+    if (error.code === "23505") {
       return res.status(409).json({ message: "This email is already registered." });
     }
 
