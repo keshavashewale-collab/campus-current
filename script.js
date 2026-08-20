@@ -862,6 +862,21 @@ window.addEventListener("DOMContentLoaded", () => {
   initializeHomepage();
   loadProducts();
   initializeLostFound();
+
+  // Send dashboard chat message by pressing Enter
+  const chatInput = document.getElementById("chatInput");
+
+  if (chatInput) {
+    chatInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+
+        if (chatInput.value.trim() || chatImageData) {
+          window.sendMessage();
+        }
+      }
+    });
+  }
 });
 
 // Lost & Found functionality
