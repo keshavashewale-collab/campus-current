@@ -85,6 +85,10 @@ function formatListingType(type) {
   return type === "buy" ? "Buy request" : "Sell post";
 }
 
+function formatProductStatus(status = "active") {
+  return status === "sold" ? "Sold" : "Available";
+}
+
 function formatLostFoundType(type) {
   return type === "lost" ? "Lost" : "Found";
 }
@@ -292,6 +296,7 @@ function renderProducts() {
     const primaryAction = product.listingType === "buy" ? "Respond to Need" : "Buy Now";
     const ownListing = currentUser && currentUser.id === product.userId;
     const actionLabel = ownListing ? "Open Chat" : contactAction;
+    const isSold = product.status === "sold";
 
     return `
       <article class="product-card" data-listing-card="${product.id}">
@@ -305,16 +310,27 @@ function renderProducts() {
             <h3><button type="button" class="product-title-button" data-open-detail="${product.id}">${escapeHtml(product.title)}</button></h3>
             <p class="product-meta">${escapeHtml(product.category)} | ${escapeHtml(product.email)}</p>
           </div>
-          <span class="listing-pill ${escapeHtml(product.listingType)}">${formatListingType(product.listingType)}</span>
+          <div class="listing-badge-row">
+            <span class="listing-pill ${escapeHtml(product.listingType)}">${formatListingType(product.listingType)}</span>
+            <span class="listing-pill ${isSold ? "sold" : "active"}">${formatProductStatus(product.status)}</span>
+          </div>
         </div>
         <p class="product-price">Rs. ${formatPrice(product.price)}</p>
         <p class="product-description">${escapeHtml(product.description)}</p>
+        ${ownListing && isSold ? `
+          <div class="sold-owner-note">
+            <strong>Item sold successfully</strong>
+            <span>You can keep this listing visible as sold or delete it permanently.</span>
+          </div>
+        ` : ""}
         <div class="product-actions">
           <button type="button" class="secondary-action" data-open-detail="${product.id}">View Details</button>
           <button type="button" class="primary-action" data-product-id="${product.id}">${primaryAction}</button>
           <button type="button" class="secondary-action" data-product-id="${product.id}">${actionLabel}</button>
           ${!ownListing ? `<button type="button" class="secondary-action" data-contact-email="${escapeHtml(product.email)}">Contact Person</button>` : ""}
           ${!ownListing ? `<button type="button" class="secondary-action" data-message-seller="${product.id}">Message Seller</button>` : ""}
+          ${ownListing && isSold ? `<button type="button" class="secondary-action" data-keep-listing="${product.id}">Keep Listing</button>` : ""}
+          ${ownListing ? `<button type="button" class="danger-action" data-delete-listing="${product.id}">Delete Listing</button>` : ""}
         </div>
       </article>
     `;
@@ -353,6 +369,22 @@ function renderProducts() {
       const product = allProducts.find((item) => item.id === productId);
       if (product) {
         openProductDetail(product);
+      }
+    });
+  });
+
+  productDiv.querySelectorAll("[data-keep-listing]").forEach((button) => {
+    button.addEventListener("click", () => {
+      alert("Your listing will stay visible as Sold.");
+    });
+  });
+
+  productDiv.querySelectorAll("[data-delete-listing]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const productId = Number(button.getAttribute("data-delete-listing"));
+      const product = allProducts.find((item) => item.id === productId);
+      if (product) {
+        requestDeleteListing(product);
       }
     });
   });
@@ -420,7 +452,10 @@ function openProductDetail(product) {
       <div class="product-detail-layout">
         <div class="product-image detail-image">${imageMarkup}</div>
         <div class="product-detail-content">
-          <span class="listing-pill ${escapeHtml(product.listingType)}">${formatListingType(product.listingType)}</span>
+          <div class="listing-badge-row">
+            <span class="listing-pill ${escapeHtml(product.listingType)}">${formatListingType(product.listingType)}</span>
+            <span class="listing-pill ${product.status === "sold" ? "sold" : "active"}">${formatProductStatus(product.status)}</span>
+          </div>
           <h2 id="productDetailTitle">${escapeHtml(product.title)}</h2>
           <p class="product-price">Rs. ${formatPrice(product.price)}</p>
           <div class="detail-meta-grid">
@@ -428,9 +463,17 @@ function openProductDetail(product) {
             <span>Seller<strong>${escapeHtml(product.email)}</strong></span>
           </div>
           <p class="product-description">${escapeHtml(product.description)}</p>
+          ${ownListing && product.status === "sold" ? `
+            <div class="sold-owner-note">
+              <strong>Item sold successfully</strong>
+              <span>You can keep this listing visible as Sold or delete it permanently.</span>
+            </div>
+          ` : ""}
           <div class="product-actions">
             <button type="button" class="primary-action" data-detail-chat="${product.id}">${ownListing ? "Open Chat" : "Message Seller"}</button>
             ${!ownListing ? `<button type="button" class="secondary-action" data-detail-contact="${escapeHtml(product.email)}">Contact Person</button>` : ""}
+            ${ownListing && product.status === "sold" ? `<button type="button" class="secondary-action" data-detail-keep-listing="${product.id}">Keep Listing</button>` : ""}
+            ${ownListing ? `<button type="button" class="danger-action" data-detail-delete-listing="${product.id}">Delete Listing</button>` : ""}
           </div>
         </div>
       </div>
@@ -449,11 +492,114 @@ function openProductDetail(product) {
   modal.querySelector("[data-detail-contact]")?.addEventListener("click", (event) => {
     contactLostFoundPoster(event.currentTarget.getAttribute("data-detail-contact"));
   });
+  modal.querySelector("[data-detail-keep-listing]")?.addEventListener("click", () => {
+    alert("Your listing will stay visible as Sold.");
+  });
+  modal.querySelector("[data-detail-delete-listing]")?.addEventListener("click", () => {
+    requestDeleteListing(product);
+  });
   modal.addEventListener("click", (event) => {
     if (event.target === modal) {
       closeProductDetail();
     }
   }, { once: true });
+}
+
+function requestDeleteListing(product) {
+  const currentUser = getCurrentUser();
+
+  if (!currentUser) {
+    alert("Please log in first.");
+    window.location.href = "login.html";
+    return;
+  }
+
+  if (!product || currentUser.id !== product.userId) {
+    alert("You can only delete your own listings.");
+    return;
+  }
+
+  openDeleteListingModal(product);
+}
+
+function openDeleteListingModal(product) {
+  const modal = document.getElementById("deleteListingModal");
+  if (!modal) {
+    return;
+  }
+
+  modal.innerHTML = `
+    <article class="modal-card delete-confirm-card" role="dialog" aria-modal="true" aria-labelledby="deleteListingTitle">
+      <p class="eyebrow">Danger zone</p>
+      <h2 id="deleteListingTitle">Delete this listing?</h2>
+      <p>This will permanently remove <strong>${escapeHtml(product.title)}</strong> from Campus Current.</p>
+      <p>This action cannot be undone.</p>
+      <div class="delete-confirm-actions">
+        <button type="button" class="button secondary" data-cancel-delete>Cancel</button>
+        <button type="button" class="danger-action" data-confirm-delete="${product.id}">Delete Listing</button>
+      </div>
+    </article>
+  `;
+
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+
+  modal.querySelector("[data-cancel-delete]")?.addEventListener("click", closeDeleteListingModal);
+  modal.querySelector("[data-confirm-delete]")?.addEventListener("click", async (event) => {
+    await deleteListing(product, event.currentTarget);
+  });
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) {
+      closeDeleteListingModal();
+    }
+  }, { once: true });
+}
+
+function closeDeleteListingModal() {
+  const modal = document.getElementById("deleteListingModal");
+  if (!modal) {
+    return;
+  }
+
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+  if (!document.getElementById("productDetailModal")?.classList.contains("open")) {
+    document.body.classList.remove("modal-open");
+  }
+}
+
+async function deleteListing(product, button) {
+  const currentUser = getCurrentUser();
+
+  if (!currentUser || currentUser.id !== product.userId) {
+    alert("You can only delete your own listings.");
+    return;
+  }
+
+  if (button) {
+    button.disabled = true;
+    button.textContent = "Deleting...";
+  }
+
+  try {
+    await apiRequest(`/products/${product.id}`, {
+      method: "DELETE",
+      body: JSON.stringify({ userId: currentUser.id })
+    });
+
+    allProducts = allProducts.filter((item) => item.id !== product.id);
+    closeDeleteListingModal();
+    closeProductDetail();
+    renderProducts();
+    alert("Listing deleted successfully.");
+  } catch (error) {
+    if (button) {
+      button.disabled = false;
+      button.textContent = "Delete Listing";
+    }
+    alert("Could not delete the listing. Please try again.");
+  }
 }
 
 function closeProductDetail() {

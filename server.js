@@ -347,7 +347,7 @@ app.delete("/api/products/:productId", async (req, res) => {
 
     await pool.query("DELETE FROM products WHERE id = ?", [productId]);
 
-    return res.json({ message: "Product deleted." });
+    return res.json({ message: "Listing deleted successfully." });
   } catch (error) {
     return res.status(500).json({ message: "Unable to delete product." });
   }
@@ -1477,7 +1477,6 @@ initializeDatabase()
     console.error("Database setup failed:", error.code || "UNKNOWN_ERROR", error.message || error);
     process.exit(1);
   });
-
 
 
 

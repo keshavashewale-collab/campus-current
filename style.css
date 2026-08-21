@@ -1296,6 +1296,11 @@ h2,
   color: var(--berry);
 }
 
+.listing-pill.active {
+  background: rgba(34, 184, 160, 0.18);
+  color: #0c6b52;
+}
+
 .campus-tabs {
   display: flex;
   gap: 10px;
@@ -2536,6 +2541,56 @@ body.modal-open {
   background: var(--mint);
 }
 
+.sold-owner-note,
+.delete-confirm-card {
+  border: 1px solid rgba(155, 49, 92, 0.18);
+  background: rgba(155, 49, 92, 0.08);
+}
+
+.sold-owner-note {
+  display: grid;
+  gap: 4px;
+  margin-block: 4px 14px;
+  padding: 12px;
+  border-radius: 16px;
+  color: var(--muted);
+}
+
+.sold-owner-note strong {
+  color: var(--berry);
+}
+
+.delete-confirm-card {
+  inline-size: min(520px, 100%);
+}
+
+.delete-confirm-card h2 {
+  margin-block-end: 12px;
+  color: var(--panel);
+  font-size: clamp(1.7rem, 4vw, 2.5rem);
+}
+
+.delete-confirm-card p {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.delete-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-block-start: 20px;
+}
+
+.danger-action:disabled,
+.button:disabled,
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.68;
+  transform: none;
+}
+
 .auth-field {
   display: grid;
   gap: 8px;
@@ -2781,6 +2836,11 @@ body.modal-open {
   }
 
   .match-signal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .delete-confirm-actions {
+    display: grid;
     grid-template-columns: 1fr;
   }
 
