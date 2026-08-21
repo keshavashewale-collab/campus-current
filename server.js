@@ -3,6 +3,7 @@ const crypto = require("crypto");
 const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
+const { findBestMatches } = require("./lostFoundMatcher");
 require("dotenv").config();
 
 const app = express();
@@ -850,6 +851,72 @@ function requireFields(res, values, message) {
   return true;
 }
 
+function serializeLostFoundMatch(match) {
+  return {
+    score: match.score,
+    confidence: match.confidence,
+    signals: {
+      text: Math.round(match.signals.text * 100),
+      category: Math.round(match.signals.category * 100),
+      location: Math.round(match.signals.location * 100),
+      date: Math.round(match.signals.date * 100),
+      attributes: Math.round(match.signals.attributes * 100)
+    },
+    reasons: match.reasons,
+    item: {
+      id: match.item.id,
+      itemType: match.item.itemType,
+      title: match.item.title,
+      category: match.item.category,
+      description: match.item.description,
+      itemDate: match.item.itemDate,
+      location: match.item.location,
+      imageUrl: match.item.imageUrl,
+      status: match.item.status,
+      userId: match.item.userId
+    }
+  };
+}
+
+async function getLostFoundItem(itemId) {
+  const [[item]] = await pool.query(
+    `SELECT lost_found_items.*, lost_found_items.item_type AS itemType, lost_found_items.item_date AS itemDate,
+      lost_found_items.image_url AS imageUrl, lost_found_items.user_id AS userId
+     FROM lost_found_items
+     WHERE lost_found_items.id = ?`,
+    [itemId]
+  );
+
+  return item || null;
+}
+
+async function findLostFoundMatchesForItem(item, options = {}) {
+  if (!item || !["lost", "found"].includes(item.itemType)) {
+    return [];
+  }
+  if (item.status === "resolved") {
+    return [];
+  }
+
+  const oppositeType = item.itemType === "lost" ? "found" : "lost";
+  const [candidates] = await pool.query(
+    `SELECT lost_found_items.*, lost_found_items.item_type AS itemType, lost_found_items.item_date AS itemDate,
+      lost_found_items.image_url AS imageUrl, lost_found_items.user_id AS userId
+     FROM lost_found_items
+     WHERE lost_found_items.item_type = ?
+       AND lost_found_items.id != ?
+       AND COALESCE(lost_found_items.status, 'active') != 'resolved'
+     ORDER BY
+       CASE WHEN LOWER(lost_found_items.category) = LOWER(?) THEN 0 ELSE 1 END,
+       ABS(lost_found_items.item_date - ?::date),
+       lost_found_items.created_at DESC
+     LIMIT 150`,
+    [oppositeType, item.id, item.category || "", item.itemDate]
+  );
+
+  return findBestMatches(item, candidates, options).map(serializeLostFoundMatch);
+}
+
 app.get("/api/lost-found", async (req, res) => {
   const type = normalizeText(req.query.type);
   const category = normalizeText(req.query.category);
@@ -873,8 +940,8 @@ app.get("/api/lost-found", async (req, res) => {
   try {
     const [items] = await pool.query(
       `SELECT lost_found_items.*, lost_found_items.item_type AS itemType, lost_found_items.item_date AS itemDate,
-        lost_found_items.image_url AS imageUrl, lost_found_items.user_id AS userId, users.email
-       FROM lost_found_items INNER JOIN users ON users.id = lost_found_items.user_id
+        lost_found_items.image_url AS imageUrl, lost_found_items.user_id AS userId
+       FROM lost_found_items
        ${filters.length ? `WHERE ${filters.join(" AND ")}` : ""}
        ORDER BY lost_found_items.created_at DESC`,
       params
@@ -899,14 +966,84 @@ app.post("/api/lost-found", async (req, res) => {
     if (!(await userExists(userId))) {
       return res.status(401).json({ message: "Please log in again." });
     }
-    await pool.query(
+    const [result] = await pool.query(
       `INSERT INTO lost_found_items (item_type, title, category, description, item_date, location, image_url, user_id)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [itemType, normalizeText(title), normalizeText(category), normalizeText(description), itemDate, normalizeText(location), imageUrl, userId]
     );
-    return res.json({ message: "Lost & Found item posted." });
+
+    const item = await getLostFoundItem(result.insertId);
+    let matches = [];
+    let matchingError = "";
+
+    try {
+      matches = item ? await findLostFoundMatchesForItem(item, { limit: 5 }) : [];
+    } catch (matchError) {
+      matchingError = "Possible matches could not be loaded right now.";
+    }
+
+    return res.json({
+      message: "Lost & Found item posted.",
+      item,
+      matches,
+      matchingError
+    });
   } catch (error) {
     return res.status(500).json({ message: "Unable to post Lost & Found item." });
+  }
+});
+
+app.get("/api/lost-found/:id/matches", async (req, res) => {
+  const itemId = Number(req.params.id);
+
+  if (!itemId) {
+    return res.status(400).json({ message: "Item is required." });
+  }
+
+  try {
+    const item = await getLostFoundItem(itemId);
+    if (!item) {
+      return res.status(404).json({ message: "Item not found." });
+    }
+
+    const matches = await findLostFoundMatchesForItem(item, { limit: 6 });
+    return res.json({ item, matches });
+  } catch (error) {
+    return res.status(500).json({ message: "Unable to load possible matches." });
+  }
+});
+
+app.post("/api/lost-found/:id/contact", async (req, res) => {
+  const itemId = Number(req.params.id);
+  const userId = Number(req.body.userId);
+
+  if (!itemId || !userId) {
+    return res.status(400).json({ message: "Item and user are required." });
+  }
+
+  try {
+    const item = await getLostFoundItem(itemId);
+    if (!item) {
+      return res.status(404).json({ message: "Item not found." });
+    }
+    if (item.userId === userId) {
+      return res.status(400).json({ message: "This is your own Lost & Found post." });
+    }
+    if (!(await userExists(userId))) {
+      return res.status(401).json({ message: "Please log in again." });
+    }
+
+    await createNotification(
+      item.userId,
+      "lost-found",
+      "Lost & Found contact request",
+      `A student wants to contact you about "${item.title}".`,
+      "campus.html"
+    );
+
+    return res.json({ message: "The owner has been notified." });
+  } catch (error) {
+    return res.status(500).json({ message: "Unable to contact owner right now." });
   }
 });
 
@@ -1340,10 +1477,6 @@ initializeDatabase()
     console.error("Database setup failed:", error.code || "UNKNOWN_ERROR", error.message || error);
     process.exit(1);
   });
-
-
-
-
 
 
 
