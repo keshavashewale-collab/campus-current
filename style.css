@@ -2191,110 +2191,704 @@ h2,
     border-radius: 22px;
   }
 }
-/* ===== FINAL MESSAGES PAGE FIX ===== */
 
-/* Prevent the whole page from scrolling while using chat */
-.messages-page {
-  height: 100dvh;
+/* Modern marketplace responsive polish */
+:focus-visible {
+  outline: 3px solid rgba(236, 95, 55, 0.45);
+  outline-offset: 3px;
+}
+
+body.modal-open {
   overflow: hidden;
 }
 
-.messages-page .app-shell {
-  height: calc(100dvh - 145px);
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
+.site-nav a[href="addproduct.html"],
+.site-nav a.active {
+  background: var(--panel);
+  color: #fff;
 }
 
-.messages-page .topbar {
+.site-nav a[href="addproduct.html"] {
+  box-shadow: 0 12px 26px rgba(16, 38, 63, 0.16);
+}
+
+.search-field {
+  position: relative;
+  display: grid;
+}
+
+.search-field input[type="search"],
+.homepage-search input[type="search"] {
+  padding-inline-start: 44px;
+}
+
+.search-field::after,
+.homepage-search div::before {
+  content: "⌕";
+  position: absolute;
+  display: grid;
+  place-items: center;
+  inline-size: 28px;
+  block-size: 28px;
+  border-radius: 999px;
+  background: var(--secondary-bg);
+  color: var(--sky);
+  font-size: 0.78rem;
+  font-weight: 900;
+  pointer-events: none;
+}
+
+.search-field::after {
+  inset-inline-start: 12px;
+  inset-block-end: 11px;
+}
+
+.homepage-search div {
+  position: relative;
+}
+
+.homepage-search div::before {
+  inset-inline-start: 18px;
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+}
+
+.category-rail {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.category-card {
+  justify-content: flex-start;
+  min-block-size: 68px;
+  padding: 12px;
+  border: 1px solid rgba(16, 38, 63, 0.1);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--panel);
+  box-shadow: none;
+  font-weight: 800;
+}
+
+.category-card span {
+  display: grid;
+  place-items: center;
+  inline-size: 34px;
+  block-size: 34px;
+  flex: 0 0 auto;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--mint), var(--sky));
+  color: #fff;
+  font-size: 0.76rem;
+}
+
+.product-card {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.product-image {
+  aspect-ratio: 4 / 3;
+  block-size: auto;
   flex: 0 0 auto;
 }
 
-/* Main messaging window */
-.messages-page .messages-layout {
-  flex: 1;
-  min-height: 0;
-  height: auto;
+.product-image-button {
+  display: block;
+  inline-size: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+.product-title-button {
+  display: inline;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  box-shadow: none;
+  text-align: start;
+  font-weight: 800;
+}
+
+.product-title-button:hover,
+.product-image-button:hover {
+  transform: none;
+}
+
+.product-header {
+  min-inline-size: 0;
+}
+
+.product-header > div {
+  min-inline-size: 0;
+}
+
+.product-header h3,
+.product-description,
+.product-meta,
+.home-card-title,
+.home-card-meta,
+.conversation-header h3,
+.chat-header h2 {
+  overflow-wrap: anywhere;
+}
+
+.product-card .listing-pill {
+  flex: 0 0 auto;
+}
+
+.primary-action,
+.secondary-action {
+  font-weight: 800;
+}
+
+.secondary-action {
+  background: var(--secondary-bg);
+  color: var(--sky);
+  box-shadow: none;
+}
+
+.product-detail-card {
+  inline-size: min(980px, 100%);
+}
+
+.product-detail-layout {
   display: grid;
-  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
-  overflow: hidden;
+  grid-template-columns: minmax(0, 0.95fr) minmax(320px, 1fr);
+  gap: 24px;
+  align-items: start;
 }
 
-/* Left conversation area */
-.messages-page .messages-sidebar {
-  min-height: 0;
-  overflow: hidden;
-}
-
-.messages-page .messages-list {
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
-/* Right chat area */
-.messages-page .messages-chat {
-  min-height: 0;
-  height: 100%;
-  overflow: hidden;
+.product-detail-content {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  min-inline-size: 0;
 }
 
-/* ONLY this area scrolls */
-.messages-page .chat-messages {
-  min-height: 0 !important;
-  height: auto !important;
-  max-height: none !important;
-  overflow-y: auto !important;
-  overscroll-behavior: contain;
+.product-detail-content h2 {
+  font-size: clamp(1.8rem, 4vw, 3.2rem);
+  color: var(--panel);
+  line-height: 1.05;
 }
 
-/* Send box always stays visible */
-.messages-page .chat-composer {
+.detail-image {
+  aspect-ratio: 1 / 1;
+  block-size: auto;
+  margin: 0;
+}
+
+.detail-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.detail-meta-grid span {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 16px;
+  background: var(--badge-bg);
+  color: var(--muted);
+}
+
+.detail-meta-grid strong {
+  color: var(--panel);
+  overflow-wrap: anywhere;
+}
+
+.listing-badge-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.ai-match-section {
+  margin-block: 24px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: 0 18px 42px rgba(16, 38, 63, 0.08);
+}
+
+.compact-ai-match {
+  margin-block: 8px 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.ai-match-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.detail-match-grid {
+  grid-template-columns: 1fr;
+}
+
+.ai-match-card {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.35fr) minmax(0, 1fr);
+  gap: 14px;
+  min-inline-size: 0;
+  padding: 14px;
+  border: 1px solid rgba(16, 38, 63, 0.1);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.ai-match-media {
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(16, 38, 63, 0.9), rgba(65, 120, 212, 0.78));
+}
+
+.ai-match-media img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.ai-match-body {
+  display: grid;
+  gap: 10px;
+  min-inline-size: 0;
+}
+
+.ai-match-body h3 {
+  margin: 0;
+  color: var(--panel);
+  font-size: 1.1rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.ai-match-score-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.ai-match-score-row strong {
+  color: var(--accent-deep);
+  font-size: 1.05rem;
+}
+
+.match-signal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.match-signal-grid span {
+  display: grid;
+  gap: 2px;
+  padding: 9px;
+  border-radius: 12px;
+  background: var(--badge-bg);
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.match-signal-grid strong {
+  color: var(--panel);
+  font-size: 0.9rem;
+}
+
+.match-reasons {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.match-reasons li {
   position: relative;
-  flex-shrink: 0;
-  z-index: 5;
+  padding-inline-start: 18px;
 }
 
-/* Do NOT stack chat vertically on laptop/tablet */
-@media (min-width: 721px) {
-  .messages-page .messages-layout {
-    grid-template-columns: minmax(260px, 320px) minmax(0, 1fr) !important;
+.match-reasons li::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block-start: 0.55em;
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: 999px;
+  background: var(--mint);
+}
+
+.auth-field {
+  display: grid;
+  gap: 8px;
+  margin-block: 16px;
+}
+
+.auth-field span {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.mobile-bottom-nav {
+  display: none;
+}
+
+@media (min-width: 1441px) {
+  .site-header,
+  .site-footer,
+  .help-band,
+  .landing-shell,
+  .app-shell,
+  .form-shell,
+  .auth-shell {
+    max-inline-size: 1380px;
   }
 
-  .messages-page .messages-sidebar {
-    max-height: none !important;
-    border-inline-end: 1px solid var(--border);
-    border-block-end: 0;
+  .products-grid {
+    grid-template-columns: repeat(auto-fill, minmax(245px, 1fr));
   }
 }
 
-/* Mobile */
-@media (max-width: 720px) {
-  .messages-page {
-    height: auto;
-    min-height: 100dvh;
-    overflow-y: auto;
+@media (max-width: 1024px) {
+  .category-rail {
+    grid-template-columns: repeat(4, minmax(150px, 1fr));
+    overflow-x: auto;
+    padding-block-end: 4px;
+    scroll-snap-type: x proximity;
   }
 
-  .messages-page .app-shell {
-    height: auto;
+  .category-card {
+    scroll-snap-align: start;
   }
 
-  .messages-page .messages-layout {
-    height: 75dvh;
-    min-height: 520px;
+  .product-detail-layout {
     grid-template-columns: 1fr;
-    grid-template-rows: 180px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 720px) {
+  body,
+  .landing-body,
+  .form-body,
+  .app-body {
+    padding: 10px 10px 88px;
   }
 
-  .messages-page .messages-sidebar {
-    max-height: 180px;
+  .site-header {
+    position: sticky;
+    inset-block-start: 8px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    padding: 10px;
+    border-radius: 18px;
+  }
+
+  .brand-mark span {
+    inline-size: 38px;
+    block-size: 38px;
+    border-radius: 12px;
+  }
+
+  .brand-mark strong {
+    font-size: 0.98rem;
+  }
+
+  .site-nav {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding-block-end: 2px;
+  }
+
+  .site-nav a,
+  .site-nav button {
+    flex: 0 0 auto;
+    min-block-size: 42px;
+    padding: 10px 13px;
+    font-size: 0.92rem;
+  }
+
+  .topbar-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .app-title,
+  .hero-panel h1,
+  .form-panel h1,
+  .auth-panel h1 {
+    font-size: clamp(2rem, 11vw, 3.2rem);
+    line-height: 1.02;
+  }
+
+  .market-hero h2,
+  .section-heading h2 {
+    font-size: clamp(1.45rem, 8vw, 2.15rem);
+    line-height: 1.08;
+  }
+
+  .pill-group,
+  .campus-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-block-end: 4px;
+  }
+
+  .pill {
+    flex: 0 0 auto;
+    min-block-size: 40px;
+  }
+
+  .category-rail {
+    display: flex;
+    gap: 10px;
+    margin-inline: -4px;
+    padding-inline: 4px;
+  }
+
+  .category-card {
+    flex: 0 0 148px;
+    min-block-size: 64px;
+  }
+
+  .products-grid,
+  .home-card-grid,
+  .home-card-grid.compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .product-card,
+  .home-product-card {
+    border-radius: 16px;
+  }
+
+  .product-card {
+    padding: 10px;
+  }
+
+  .product-header {
+    display: grid;
+    gap: 8px;
+  }
+
+  .product-header h3,
+  .home-card-title {
+    font-size: 0.98rem;
+    line-height: 1.2;
+  }
+
+  .product-price,
+  .home-card-price {
+    font-size: 1.08rem;
+  }
+
+  .product-meta,
+  .product-description,
+  .home-card-meta,
+  .home-card-description {
+    font-size: 0.86rem;
+    line-height: 1.35;
+  }
+
+  .product-description {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
     overflow: hidden;
   }
 
-  .messages-page .messages-chat {
-    min-height: 0;
+  .product-actions {
+    gap: 8px;
+  }
+
+  .product-actions button {
+    min-inline-size: 0;
+    inline-size: 100%;
+    min-block-size: 42px;
+    padding: 10px 12px;
+    font-size: 0.86rem;
+  }
+
+  .home-product-card {
+    grid-template-rows: minmax(120px, 38vw) 1fr;
+  }
+
+  .home-card-body {
+    padding: 12px;
+  }
+
+  .home-card-kicker {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .modal-shell {
+    padding: 10px;
+  }
+
+  .modal-card {
+    max-block-size: calc(100dvh - 20px);
+    overflow-y: auto;
+    padding: 18px;
+    border-radius: 20px;
+  }
+
+  .modal-close {
+    position: sticky;
+    inset-block-start: 0;
+    margin-inline-start: auto;
+    z-index: 1;
+  }
+
+  .detail-meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-match-section {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .ai-match-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-match-card {
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .match-signal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chat-column.open {
+    position: fixed;
+    inset: 8px;
+    inline-size: auto;
+    z-index: 1300;
+  }
+
+  .chat-column .chat-panel {
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    max-block-size: calc(100dvh - 16px);
+    block-size: calc(100dvh - 16px);
+    overflow: hidden;
+  }
+
+  .chat-column .chat-messages {
+    min-block-size: 0;
+    max-block-size: none;
+    overflow-y: auto;
+  }
+
+  .messages-layout {
+    block-size: calc(100dvh - 178px);
+    min-block-size: 560px;
+    display: grid;
+    grid-template-rows: minmax(170px, 34%) minmax(0, 1fr);
+    overflow: hidden;
+  }
+
+  .messages-sidebar {
+    max-block-size: none;
+    min-block-size: 0;
+  }
+
+  .messages-list,
+  .messages-chat .chat-messages {
+    overscroll-behavior: contain;
+  }
+
+  .messages-chat {
+    min-block-size: 0;
+  }
+
+  .messages-chat .chat-composer {
+    position: sticky;
+    inset-block-end: 0;
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 10px;
+  }
+
+  .messages-chat .chat-composer textarea {
+    min-block-size: 44px;
+    border-radius: 18px;
+  }
+
+  .mobile-bottom-nav {
+    position: fixed;
+    inset-inline: 10px;
+    inset-block-end: 10px;
+    z-index: 1400;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 18px 44px rgba(16, 38, 63, 0.18);
+    backdrop-filter: blur(18px);
+  }
+
+  .mobile-bottom-nav a {
+    display: grid;
+    place-items: center;
+    min-block-size: 46px;
+    border-radius: 16px;
+    color: var(--muted);
+    font-size: 0.76rem;
+    font-weight: 800;
+  }
+
+  .mobile-bottom-nav a.active,
+  .mobile-bottom-nav .sell-tab {
+    background: var(--panel);
+    color: #fff;
+  }
+
+  .mobile-bottom-nav .sell-tab {
+    transform: translateY(-10px);
+    box-shadow: 0 14px 30px rgba(16, 38, 63, 0.22);
+  }
+}
+
+@media (max-width: 380px) {
+  .products-grid,
+  .home-card-grid,
+  .home-card-grid.compact {
+    grid-template-columns: 1fr;
+  }
+
+  .mobile-bottom-nav {
+    inset-inline: 6px;
+  }
+
+  .mobile-bottom-nav a {
+    font-size: 0.7rem;
   }
 }

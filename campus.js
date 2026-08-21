@@ -2,6 +2,7 @@ import { API_BASE_URL } from "./config.js";
 
 let allLostFoundItems = [];
 let uploadedImageData = "";
+let latestMatches = [];
 
 function getValue(id) {
   return document.getElementById(id)?.value.trim() || "";
@@ -32,6 +33,80 @@ function formatDateString(dateString) {
   } catch (_error) {
     return dateString;
   }
+}
+
+function getMatchSignalLabel(value) {
+  if (value >= 85) return "High";
+  if (value >= 65) return "Medium";
+  if (value >= 40) return "Low";
+  return "Weak";
+}
+
+function renderMatchEmpty(message = "No strong matches found yet. We'll show possible matches when relevant Lost & Found posts are available.") {
+  const container = document.getElementById("lostFoundMatchResults");
+  if (!container) return;
+  container.innerHTML = `<div class="home-empty-state"><p>${escapeHtml(message)}</p></div>`;
+}
+
+function renderMatchCards(matches, options = {}) {
+  const container = options.container || document.getElementById("lostFoundMatchResults");
+  if (!container) return;
+
+  if (!matches || !matches.length) {
+    container.innerHTML = `<div class="home-empty-state"><p>No strong matches found yet. We'll show possible matches when relevant Lost & Found posts are available.</p></div>`;
+    return;
+  }
+
+  container.innerHTML = matches.map((match, index) => {
+    const item = match.item;
+    const reasons = (match.reasons || []).slice(0, 4);
+
+    return `
+      <article class="ai-match-card">
+        <div class="ai-match-media">
+          ${item.imageUrl
+            ? `<img src="${item.imageUrl}" alt="${escapeHtml(item.title)}" loading="lazy">`
+            : `<div class="product-placeholder">${escapeHtml(item.itemType || "match")}</div>`}
+        </div>
+        <div class="ai-match-body">
+          <div class="ai-match-score-row">
+            <span class="listing-pill ${escapeHtml(item.itemType)}">${escapeHtml(item.itemType)}</span>
+            <strong>${match.score}% Match</strong>
+          </div>
+          <h3>${escapeHtml(item.title)}</h3>
+          <p class="product-meta">${escapeHtml(item.category)} | ${escapeHtml(item.location)}</p>
+          <p class="product-meta">${formatDateString(item.itemDate)} | ${escapeHtml(match.confidence)}</p>
+          <div class="match-signal-grid" aria-label="Match signal scores">
+            <span>Location<strong>${getMatchSignalLabel(match.signals?.location || 0)}</strong></span>
+            <span>Category<strong>${getMatchSignalLabel(match.signals?.category || 0)}</strong></span>
+            <span>Description<strong>${getMatchSignalLabel(match.signals?.text || 0)}</strong></span>
+            <span>Date<strong>${getMatchSignalLabel(match.signals?.date || 0)}</strong></span>
+          </div>
+          <ul class="match-reasons">
+            ${reasons.map((reason) => `<li>${escapeHtml(reason)}</li>`).join("")}
+          </ul>
+          <div class="product-actions">
+            <button type="button" class="secondary-action" data-view-match="${index}">View Item</button>
+            <button type="button" class="primary-action" data-contact-match="${index}">Contact Owner</button>
+          </div>
+        </div>
+      </article>
+    `;
+  }).join("");
+
+  container.querySelectorAll("[data-view-match]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const match = matches[Number(button.getAttribute("data-view-match"))];
+      if (match?.item) openLostFoundDetail(match.item);
+    });
+  });
+
+  container.querySelectorAll("[data-contact-match]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const match = matches[Number(button.getAttribute("data-contact-match"))];
+      if (match?.item) await contactLostFoundOwner(match.item.id);
+    });
+  });
 }
 
 async function apiRequest(path, options = {}) {
@@ -73,6 +148,9 @@ async function loadLostFound() {
     const data = await apiRequest(`/lost-found?${params.toString()}`);
     allLostFoundItems = data.items || [];
     renderLostFoundItems(allLostFoundItems);
+    if (!latestMatches.length) {
+      renderMatchEmpty();
+    }
   } catch (error) {
     const list = document.getElementById("lostFoundList");
     if (list) {
@@ -101,24 +179,26 @@ function renderLostFoundItems(items) {
     
     return `
       <article class="product-card lost-found-item">
-        <div class="product-image">
+        <button type="button" class="product-image product-image-button" data-view-item-id="${item.id}" aria-label="View details for ${escapeHtml(item.title)}">
           ${item.imageUrl
-            ? `<img src="${item.imageUrl}" alt="${escapeHtml(item.title)}">`
+            ? `<img src="${item.imageUrl}" alt="${escapeHtml(item.title)}" loading="lazy">`
             : `<div class="product-placeholder">${escapeHtml(item.itemType)}</div>`}
-        </div>
+        </button>
         <div class="product-header">
           <div>
-            <h3>${escapeHtml(item.title)}</h3>
+            <h3><button type="button" class="product-title-button" data-view-item-id="${item.id}">${escapeHtml(item.title)}</button></h3>
             <p class="product-meta">${escapeHtml(item.category)} | ${escapeHtml(item.location)}</p>
-            <p class="product-meta">Date: ${formatDateString(item.itemDate)} | User: ${escapeHtml(item.email)}</p>
+            <p class="product-meta">Date: ${formatDateString(item.itemDate)}</p>
           </div>
-          <div style="display:flex;gap:8px;align-items:center">
+          <div class="listing-badge-row">
             <span class="listing-pill ${escapeHtml(item.itemType)}">${escapeHtml(item.itemType)}</span>
             ${resolvedBadge}
           </div>
         </div>
         <p class="product-description">${escapeHtml(item.description)}</p>
         <div class="product-actions">
+          <button type="button" class="secondary-action" data-view-item-id="${item.id}">View Item</button>
+          ${!isOwner ? `<button type="button" class="primary-action" data-contact-item-id="${item.id}">Contact Owner</button>` : ""}
           ${isOwner && !isResolved
             ? `<button type="button" class="secondary-action" data-resolve-item-id="${item.id}">Mark Resolved</button>`
             : ""}
@@ -131,6 +211,21 @@ function renderLostFoundItems(items) {
     button.addEventListener("click", async () => {
       const itemId = Number(button.getAttribute("data-resolve-item-id"));
       await resolveLostFoundItem(itemId);
+    });
+  });
+
+  list.querySelectorAll("[data-view-item-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const itemId = Number(button.getAttribute("data-view-item-id"));
+      const item = allLostFoundItems.find((entry) => entry.id === itemId);
+      if (item) openLostFoundDetail(item);
+    });
+  });
+
+  list.querySelectorAll("[data-contact-item-id]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const itemId = Number(button.getAttribute("data-contact-item-id"));
+      await contactLostFoundOwner(itemId);
     });
   });
 }
@@ -182,7 +277,7 @@ async function handleLostFoundFormSubmit(event) {
   }
   
   try {
-    await apiRequest("/lost-found", {
+    const data = await apiRequest("/lost-found", {
       method: "POST",
       body: JSON.stringify({
         userId: currentUser.id,
@@ -197,6 +292,12 @@ async function handleLostFoundFormSubmit(event) {
     });
     
     alert("Lost & Found item posted!");
+    latestMatches = data.matches || [];
+    if (data.matchingError) {
+      renderMatchEmpty("Your item was posted successfully. Possible matches could not be loaded right now.");
+    } else {
+      renderMatchCards(latestMatches);
+    }
     form.reset();
     uploadedImageData = "";
     setImagePreview("");
@@ -205,6 +306,112 @@ async function handleLostFoundFormSubmit(event) {
   } catch (error) {
     alert(error.message);
   }
+}
+
+async function contactLostFoundOwner(itemId) {
+  const currentUser = getCurrentUser();
+
+  if (!currentUser) {
+    alert("Please log in first to contact the owner.");
+    window.location.href = "login.html";
+    return;
+  }
+
+  try {
+    const data = await apiRequest(`/lost-found/${itemId}/contact`, {
+      method: "POST",
+      body: JSON.stringify({ userId: currentUser.id })
+    });
+    alert(data.message || "The owner has been notified.");
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+async function loadMatchesForItem(itemId) {
+  const data = await apiRequest(`/lost-found/${itemId}/matches`);
+  return data.matches || [];
+}
+
+async function openLostFoundDetail(item) {
+  const modal = document.getElementById("lostFoundDetailModal");
+  const currentUser = getCurrentUser();
+  if (!modal) return;
+
+  const isOwner = currentUser && currentUser.id === item.userId;
+
+  modal.innerHTML = `
+    <article class="modal-card product-detail-card" role="dialog" aria-modal="true" aria-labelledby="lostFoundDetailTitle">
+      <button type="button" class="modal-close" data-close-lost-found-detail aria-label="Close item details">Close</button>
+      <div class="product-detail-layout">
+        <div class="product-image detail-image">
+          ${item.imageUrl
+            ? `<img src="${item.imageUrl}" alt="${escapeHtml(item.title)}" loading="lazy">`
+            : `<div class="product-placeholder">${escapeHtml(item.itemType || "item")}</div>`}
+        </div>
+        <div class="product-detail-content">
+          <span class="listing-pill ${escapeHtml(item.itemType)}">${escapeHtml(item.itemType)}</span>
+          <h2 id="lostFoundDetailTitle">${escapeHtml(item.title)}</h2>
+          <div class="detail-meta-grid">
+            <span>Category<strong>${escapeHtml(item.category)}</strong></span>
+            <span>Location<strong>${escapeHtml(item.location)}</strong></span>
+            <span>Date<strong>${formatDateString(item.itemDate)}</strong></span>
+            <span>Status<strong>${item.status === "resolved" ? "Resolved" : "Active"}</strong></span>
+          </div>
+          <p class="product-description">${escapeHtml(item.description)}</p>
+          <div class="product-actions">
+            ${!isOwner ? `<button type="button" class="primary-action" data-detail-contact-owner="${item.id}">Contact Owner</button>` : ""}
+            ${isOwner && item.status !== "resolved" ? `<button type="button" class="secondary-action" data-detail-resolve="${item.id}">Mark Resolved</button>` : ""}
+          </div>
+          <section class="ai-match-section compact-ai-match">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Possible AI Matches</p>
+                <h2>Related ${item.itemType === "lost" ? "found" : "lost"} posts</h2>
+              </div>
+            </div>
+            <div class="ai-match-grid detail-match-grid" id="detailMatchResults">
+              <div class="home-empty-state"><p>Loading possible matches...</p></div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </article>
+  `;
+
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+
+  modal.querySelector("[data-close-lost-found-detail]")?.addEventListener("click", closeLostFoundDetail);
+  modal.querySelector("[data-detail-contact-owner]")?.addEventListener("click", async () => {
+    await contactLostFoundOwner(item.id);
+  });
+  modal.querySelector("[data-detail-resolve]")?.addEventListener("click", async () => {
+    await resolveLostFoundItem(item.id);
+    closeLostFoundDetail();
+  });
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) closeLostFoundDetail();
+  }, { once: true });
+
+  try {
+    const matches = await loadMatchesForItem(item.id);
+    renderMatchCards(matches, { container: document.getElementById("detailMatchResults") });
+  } catch (error) {
+    const container = document.getElementById("detailMatchResults");
+    if (container) {
+      container.innerHTML = `<div class="home-empty-state"><p>${escapeHtml(error.message)}</p></div>`;
+    }
+  }
+}
+
+function closeLostFoundDetail() {
+  const modal = document.getElementById("lostFoundDetailModal");
+  if (!modal) return;
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modal-open");
 }
 
 function setImagePreview(imageDataUrl) {

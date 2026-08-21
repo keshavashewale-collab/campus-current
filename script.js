@@ -294,15 +294,15 @@ function renderProducts() {
     const actionLabel = ownListing ? "Open Chat" : contactAction;
 
     return `
-      <article class="product-card" data-product-id="${product.id}">
-        <div class="product-image">
+      <article class="product-card" data-listing-card="${product.id}">
+        <button type="button" class="product-image product-image-button" data-open-detail="${product.id}" aria-label="View details for ${escapeHtml(product.title)}">
           ${product.imageUrl
-            ? `<img src="${product.imageUrl}" alt="${escapeHtml(product.title)}">`
+            ? `<img src="${product.imageUrl}" alt="${escapeHtml(product.title)}" loading="lazy">`
             : `<div class="product-placeholder">${product.listingType === "buy" ? "WANT" : "SALE"}</div>`}
-        </div>
+        </button>
         <div class="product-header">
           <div>
-            <h3>${escapeHtml(product.title)}</h3>
+            <h3><button type="button" class="product-title-button" data-open-detail="${product.id}">${escapeHtml(product.title)}</button></h3>
             <p class="product-meta">${escapeHtml(product.category)} | ${escapeHtml(product.email)}</p>
           </div>
           <span class="listing-pill ${escapeHtml(product.listingType)}">${formatListingType(product.listingType)}</span>
@@ -310,6 +310,7 @@ function renderProducts() {
         <p class="product-price">Rs. ${formatPrice(product.price)}</p>
         <p class="product-description">${escapeHtml(product.description)}</p>
         <div class="product-actions">
+          <button type="button" class="secondary-action" data-open-detail="${product.id}">View Details</button>
           <button type="button" class="primary-action" data-product-id="${product.id}">${primaryAction}</button>
           <button type="button" class="secondary-action" data-product-id="${product.id}">${actionLabel}</button>
           ${!ownListing ? `<button type="button" class="secondary-action" data-contact-email="${escapeHtml(product.email)}">Contact Person</button>` : ""}
@@ -345,11 +346,22 @@ function renderProducts() {
       contactLostFoundPoster(email);
     });
   });
+
+  productDiv.querySelectorAll("[data-open-detail]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const productId = Number(button.getAttribute("data-open-detail"));
+      const product = allProducts.find((item) => item.id === productId);
+      if (product) {
+        openProductDetail(product);
+      }
+    });
+  });
 }
 
 function initializeFilters() {
   const filterButtons = document.querySelectorAll("[data-filter]");
   const searchInput = document.getElementById("searchInput");
+  const categoryButtons = document.querySelectorAll("[data-category-search]");
 
   filterButtons.forEach((button) => {
     button.addEventListener("click", () => {
@@ -372,6 +384,87 @@ function initializeFilters() {
       renderProducts();
     }
   });
+
+  categoryButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      if (!searchInput) {
+        return;
+      }
+      searchInput.value = button.getAttribute("data-category-search") || "";
+      searchInput.focus();
+      if (activeFilter === "lostFound") {
+        renderLostFoundItems(lostFoundItems);
+      } else {
+        renderProducts();
+      }
+    });
+  });
+}
+
+function openProductDetail(product) {
+  const modal = document.getElementById("productDetailModal");
+  const currentUser = getCurrentUser();
+
+  if (!modal) {
+    return;
+  }
+
+  const ownListing = currentUser && currentUser.id === product.userId;
+  const imageMarkup = product.imageUrl
+    ? `<img src="${product.imageUrl}" alt="${escapeHtml(product.title)}" loading="lazy">`
+    : `<div class="product-placeholder">${product.listingType === "buy" ? "WANT" : "SALE"}</div>`;
+
+  modal.innerHTML = `
+    <article class="modal-card product-detail-card" role="dialog" aria-modal="true" aria-labelledby="productDetailTitle">
+      <button type="button" class="modal-close" data-close-detail aria-label="Close product details">Close</button>
+      <div class="product-detail-layout">
+        <div class="product-image detail-image">${imageMarkup}</div>
+        <div class="product-detail-content">
+          <span class="listing-pill ${escapeHtml(product.listingType)}">${formatListingType(product.listingType)}</span>
+          <h2 id="productDetailTitle">${escapeHtml(product.title)}</h2>
+          <p class="product-price">Rs. ${formatPrice(product.price)}</p>
+          <div class="detail-meta-grid">
+            <span>Category<strong>${escapeHtml(product.category)}</strong></span>
+            <span>Seller<strong>${escapeHtml(product.email)}</strong></span>
+          </div>
+          <p class="product-description">${escapeHtml(product.description)}</p>
+          <div class="product-actions">
+            <button type="button" class="primary-action" data-detail-chat="${product.id}">${ownListing ? "Open Chat" : "Message Seller"}</button>
+            ${!ownListing ? `<button type="button" class="secondary-action" data-detail-contact="${escapeHtml(product.email)}">Contact Person</button>` : ""}
+          </div>
+        </div>
+      </div>
+    </article>
+  `;
+
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+
+  modal.querySelector("[data-close-detail]")?.addEventListener("click", closeProductDetail);
+  modal.querySelector("[data-detail-chat]")?.addEventListener("click", () => {
+    closeProductDetail();
+    openChat(product);
+  });
+  modal.querySelector("[data-detail-contact]")?.addEventListener("click", (event) => {
+    contactLostFoundPoster(event.currentTarget.getAttribute("data-detail-contact"));
+  });
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) {
+      closeProductDetail();
+    }
+  }, { once: true });
+}
+
+function closeProductDetail() {
+  const modal = document.getElementById("productDetailModal");
+  if (!modal) {
+    return;
+  }
+
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modal-open");
 }
 
 async function loadProducts() {
@@ -439,7 +532,7 @@ async function renderChat(product) {
         <article class="message ${isSelf ? "self" : "other"}">
           <div class="message-content">
             ${message.message ? `<div>${escapeHtml(message.message)}</div>` : ""}
-            ${message.imageUrl ? `<img class="message-image" src="${message.imageUrl}" alt="Chat attachment">` : ""}
+            ${message.imageUrl ? `<img class="message-image" src="${message.imageUrl}" alt="Chat attachment" loading="lazy">` : ""}
           </div>
           <small>${isSelf ? "You" : escapeHtml(message.senderEmail || '')} | ${formatMessageTime(message.createdAt)}</small>
         </article>
@@ -661,7 +754,7 @@ function renderHomeProductCards(containerId, products, emptyMessage) {
   container.innerHTML = products.map((product) => {
     const listingLabel = formatListingType(product.listingType);
     const imageMarkup = product.imageUrl
-      ? `<img src="${safeText(product.imageUrl)}" alt="${safeText(product.title)}">`
+      ? `<img src="${safeText(product.imageUrl)}" alt="${safeText(product.title)}" loading="lazy">`
       : `<div class="home-card-placeholder">${product.listingType === "buy" ? "WANT" : "SALE"}</div>`;
 
     return `
@@ -694,7 +787,7 @@ function renderHomeLostFoundCards(items) {
 
   container.innerHTML = items.map((item) => {
     const imageMarkup = item.imageUrl
-      ? `<img src="${safeText(item.imageUrl)}" alt="${safeText(item.title)}">`
+      ? `<img src="${safeText(item.imageUrl)}" alt="${safeText(item.title)}" loading="lazy">`
       : `<div class="home-card-placeholder">${item.itemType === "lost" ? "LOST" : "FOUND"}</div>`;
 
     return `
@@ -862,21 +955,6 @@ window.addEventListener("DOMContentLoaded", () => {
   initializeHomepage();
   loadProducts();
   initializeLostFound();
-
-  // Send dashboard chat message by pressing Enter
-  const chatInput = document.getElementById("chatInput");
-
-  if (chatInput) {
-    chatInput.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault();
-
-        if (chatInput.value.trim() || chatImageData) {
-          window.sendMessage();
-        }
-      }
-    });
-  }
 });
 
 // Lost & Found functionality
@@ -908,7 +986,7 @@ function renderLostFoundItems(items) {
     <article class="product-card" data-item-id="${item.id}">
       <div class="product-image">
         ${item.imageUrl
-          ? `<img src="${item.imageUrl}" alt="${escapeHtml(item.title)}">`
+          ? `<img src="${item.imageUrl}" alt="${escapeHtml(item.title)}" loading="lazy">`
           : `<div class="product-placeholder">${item.itemType === "lost" ? "LOST" : "FOUND"}</div>`}
       </div>
       <div class="product-header">
@@ -921,7 +999,7 @@ function renderLostFoundItems(items) {
       <p class="product-description">${escapeHtml(item.description)}</p>
       <div class="product-actions">
         <small>Reported: ${formatDateString(item.itemDate)} | Status: ${item.status === "resolved" ? "Resolved" : "Active"}</small>
-        <button type="button" class="secondary-action" data-contact-email="${escapeHtml(item.email)}">Contact Person</button>
+        <button type="button" class="secondary-action" data-contact-lost-found="${item.id}">Contact Owner</button>
         ${item.status !== "resolved" && getCurrentUser()?.id === item.userId ? `
           <button type="button" class="secondary-action" data-resolve-item="${item.id}">Mark as Resolved</button>
         ` : ""}
@@ -930,12 +1008,10 @@ function renderLostFoundItems(items) {
   `).join("");
 
   // Attach event listeners after rendering
-  productDiv.querySelectorAll("[data-contact-email]").forEach((button) => {
+  productDiv.querySelectorAll("[data-contact-lost-found]").forEach((button) => {
     button.addEventListener("click", () => {
-      const email = button.getAttribute("data-contact-email");
-      // Sanitize email before passing to contactLostFoundPoster
-      const sanitizedEmail = escapeHtml(email || '');
-      contactLostFoundPoster(sanitizedEmail);
+      const itemId = Number(button.getAttribute("data-contact-lost-found"));
+      contactLostFoundOwner(itemId);
     });
   });
 
@@ -987,6 +1063,26 @@ window.contactLostFoundPoster = function (email) {
     alert(`You can now contact ${sanitizedEmail} through the marketplace messaging system.`);
   }
 };
+
+async function contactLostFoundOwner(itemId) {
+  const currentUser = getCurrentUser();
+
+  if (!currentUser) {
+    alert("Please log in first to contact the owner.");
+    window.location.href = "login.html";
+    return;
+  }
+
+  try {
+    const data = await apiRequest(`/lost-found/${itemId}/contact`, {
+      method: "POST",
+      body: JSON.stringify({ userId: currentUser.id })
+    });
+    alert(data.message || "The owner has been notified.");
+  } catch (error) {
+    alert(error.message);
+  }
+}
 
 function formatDateString(dateString) {
   if (!dateString) return "Unknown date";

@@ -29,12 +29,26 @@
       <h1>Enter the marketplace.</h1>
       <p>Login to browse listings, post what you want to buy or sell, and continue conversations.</p>
 
-      <input type="email" id="email" placeholder="College Email">
-      <input type="password" id="password" placeholder="Password">
+      <label class="auth-field" for="email">
+        <span>College email</span>
+        <input type="email" id="email" placeholder="name@college.edu" autocomplete="email">
+      </label>
+      <label class="auth-field" for="password">
+        <span>Password</span>
+        <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password">
+      </label>
       <button type="button" class="button primary auth-button" onclick="login()">Login</button>
       <p>New user? <a href="signup.html">Create an account</a></p>
     </section>
   </main>
+
+  <nav class="mobile-bottom-nav" aria-label="Mobile quick navigation">
+    <a href="dashboard.html"><span>Home</span></a>
+    <a href="dashboard.html#searchInput"><span>Search</span></a>
+    <a href="addproduct.html" class="sell-tab"><span>Sell</span></a>
+    <a href="messages.html"><span>Messages</span></a>
+    <a href="login.html" class="active"><span>Profile</span></a>
+  </nav>
 
   <script type="module" src="script.js"></script>
 </body>

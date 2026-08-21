@@ -63,6 +63,16 @@
             <span>Browse campus finds</span>
             <input type="search" id="searchInput" placeholder="Search headphones, books, room lights...">
           </label>
+          <div class="category-rail" aria-label="Popular categories">
+            <button type="button" class="category-card" data-category-search="Electronics"><span>EL</span>Electronics</button>
+            <button type="button" class="category-card" data-category-search="Books"><span>BK</span>Books</button>
+            <button type="button" class="category-card" data-category-search="Notes"><span>NT</span>Notes</button>
+            <button type="button" class="category-card" data-category-search="Hostel"><span>HS</span>Hostel</button>
+            <button type="button" class="category-card" data-category-search="Lost"><span>LF</span>Lost & Found</button>
+            <button type="button" class="category-card" data-category-search="Rental"><span>BR</span>Book Rental</button>
+            <button type="button" class="category-card" data-category-search="Events"><span>EV</span>Events</button>
+            <button type="button" class="category-card" data-category-search="Internship"><span>IN</span>Internship</button>
+          </div>
           <div class="market-stats">
             <article>
               <strong id="listingCount">0</strong>
@@ -148,6 +158,14 @@
     <span>Campus Current</span>
     <p>Help: <a href="mailto:campuscurrect10@gmail.com">campuscurrect10@gmail.com</a></p>
   </footer>
+
+  <nav class="mobile-bottom-nav" aria-label="Mobile quick navigation">
+    <a href="dashboard.html" class="active"><span>Home</span></a>
+    <a href="#searchInput"><span>Search</span></a>
+    <a href="addproduct.html" class="sell-tab"><span>Sell</span></a>
+    <a href="messages.html"><span>Messages</span></a>
+    <a href="login.html"><span>Profile</span></a>
+  </nav>
 
   <script type="module" src="script.js"></script>
 </body>

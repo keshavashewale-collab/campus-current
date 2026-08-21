@@ -203,7 +203,7 @@ async function renderChatMessages(productId) {
         <article class="message ${isSelf ? "self" : "other"}" data-message-id="${message.id}">
           <div class="message-content">
             ${message.message ? `<div>${escapeHtml(message.message)}</div>` : ""}
-            ${message.imageUrl ? `<img class="message-image" src="${message.imageUrl}" alt="Message attachment">` : ""}
+            ${message.imageUrl ? `<img class="message-image" src="${message.imageUrl}" alt="Message attachment" loading="lazy">` : ""}
           </div>
           <small>${isSelf ? "You" : escapeHtml(message.senderEmail)} | ${formatMessageTime(message.createdAt)}</small>
         </article>

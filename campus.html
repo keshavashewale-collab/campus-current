@@ -65,6 +65,19 @@
         <input id="lostFoundDate" type="date">
         <button type="button" class="button secondary" onclick="loadLostFound()">Filter</button>
       </div>
+      <section class="ai-match-section" aria-live="polite">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">AI Possible Matches</p>
+            <h2>Smart Lost & Found matches</h2>
+          </div>
+        </div>
+        <div id="lostFoundMatchResults" class="ai-match-grid">
+          <div class="home-empty-state">
+            <p>No strong matches found yet. We'll show possible matches when relevant Lost & Found posts are available.</p>
+          </div>
+        </div>
+      </section>
       <div id="lostFoundList" class="module-grid"></div>
     </section>
 
@@ -195,6 +208,16 @@
   </main>
 
   <footer class="site-footer"><span>Campus Current</span><p>Help: <a href="mailto:campuscurrent10@gmail.com">campuscurrent10@gmail.com</a></p></footer>
+  <section id="lostFoundDetailModal" class="modal-shell" aria-hidden="true"></section>
+
+  <nav class="mobile-bottom-nav" aria-label="Mobile quick navigation">
+    <a href="dashboard.html"><span>Home</span></a>
+    <a href="dashboard.html#searchInput"><span>Search</span></a>
+    <a href="addproduct.html" class="sell-tab"><span>Sell</span></a>
+    <a href="messages.html"><span>Messages</span></a>
+    <a href="login.html"><span>Profile</span></a>
+  </nav>
+
   <script type="module" src="campus.js"></script>
 </body>
 </html>
